@@ -80,7 +80,7 @@ export default async function OrderConfirmationPage({ params }: { params: Promis
               </h2>
               
               <div className="flex flex-col gap-4 mb-6 max-h-60 overflow-y-auto pr-2 no-scrollbar">
-                {order.items.map(item => (
+                {order.items.map((item: any) => (
                   <div key={item.id} className="flex gap-4">
                     <div className="w-16 h-16 shrink-0 bg-gray-50 rounded-lg overflow-hidden border border-gray-100">
                       {/* eslint-disable-next-line @next/next/no-img-element */}

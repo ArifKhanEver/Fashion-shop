@@ -62,9 +62,9 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     originalPrice: productData.discountedPrice ? Number(productData.price) : undefined,
     discountPercent: productData.discountedPrice ? Math.round(((Number(productData.price) - Number(productData.discountedPrice)) / Number(productData.price)) * 100) : undefined,
     image: productData.images?.[0]?.url || "/placeholder-product.jpg",
-    images: productData.images.map(img => img.url),
-    colors: Array.from(new Set(productData.variants.map(v => v.color).filter(Boolean))),
-    sizes: Array.from(new Set(productData.variants.map(v => v.size).filter(Boolean))),
+    images: productData.images.map((img: any) => img.url),
+    colors: Array.from(new Set(productData.variants.map((v: any) => v.color).filter(Boolean))),
+    sizes: Array.from(new Set(productData.variants.map((v: any) => v.size).filter(Boolean))),
   };
 
   // Fetch related products (latest from the same primary category)
@@ -72,9 +72,9 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   if (productData.categories.length > 0) {
     const { products } = await getProducts({ pageSize: 5 }); // Simple fallback since getProductsByCategory isn't strictly needed for "latest overall", but let's just get latest
     relatedProducts = products
-      .filter(p => p.id !== productData.id)
+      .filter((p: any) => p.id !== productData.id)
       .slice(0, 4)
-      .map(p => ({
+      .map((p: any) => ({
         id: p.id,
         title: p.title,
         slug: p.slug,
@@ -86,9 +86,9 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   } else {
     const { products } = await getProducts({ pageSize: 5 });
     relatedProducts = products
-      .filter(p => p.id !== productData.id)
+      .filter((p: any) => p.id !== productData.id)
       .slice(0, 4)
-      .map(p => ({
+      .map((p: any) => ({
         id: p.id,
         title: p.title,
         slug: p.slug,

@@ -139,7 +139,7 @@ export async function adminUpdateProduct(id: string, data: ProductInput) {
   // the safest approach in Prisma is to delete all and recreate them,
   // or use a transaction with deleteMany + createMany.
   
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx: any) => {
     // 1. Update basic product info and clear existing relations
     await tx.product.update({
       where: { id },
@@ -181,11 +181,11 @@ export async function adminUpdateProduct(id: string, data: ProductInput) {
     // For simplicity in this implementation, we will UPSERT variants.
     
     const existingVariants = await tx.productVariant.findMany({ where: { productId: id } });
-    const existingVariantIds = new Set(existingVariants.map(v => v.id));
-    const incomingVariantIds = new Set(variants.filter(v => v.id).map(v => v.id as string));
+    const existingVariantIds = new Set(existingVariants.map((v: any) => v.id as string));
+    const incomingVariantIds = new Set(variants.filter((v: any) => v.id).map((v: any) => v.id as string));
 
     // Delete variants that are no longer present
-    const variantsToDelete = [...existingVariantIds].filter(id => !incomingVariantIds.has(id));
+    const variantsToDelete = [...existingVariantIds].filter((id: any) => !incomingVariantIds.has(id));
     if (variantsToDelete.length > 0) {
       // NOTE: If an order references these, it will fail. A safer approach in a real app is to mark as 'inactive'
       // or set variantId to null in OrderItems. We'll attempt delete.

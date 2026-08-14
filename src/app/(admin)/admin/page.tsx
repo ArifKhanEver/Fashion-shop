@@ -99,7 +99,7 @@ export default async function AdminDashboardOverview() {
               {recentOrders.length === 0 && (
                 <li className="p-6 text-center text-gray-500">No recent orders</li>
               )}
-              {recentOrders.map(order => (
+              {recentOrders.map((order: any) => (
                 <li key={order.id} className="p-4 sm:px-6 hover:bg-gray-50 transition-colors">
                   <div className="flex items-center justify-between mb-1">
                     <span className="font-bold text-gray-900 text-sm">{order.invoiceNumber}</span>

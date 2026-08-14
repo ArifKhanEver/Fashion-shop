@@ -49,8 +49,8 @@ async function main() {
 
   // Create products
   const categoryIds = await prisma.category.findMany({ select: { id: true, slug: true } });
-  const bagsCategory = categoryIds.find(c => c.slug === "luxury-bags")?.id;
-  const heelsCategory = categoryIds.find(c => c.slug === "luxury-edit-heels")?.id;
+  const bagsCategory = categoryIds.find((c: any) => c.slug === "luxury-bags")?.id;
+  const heelsCategory = categoryIds.find((c: any) => c.slug === "luxury-edit-heels")?.id;
 
   if (bagsCategory && heelsCategory) {
     // Product 1

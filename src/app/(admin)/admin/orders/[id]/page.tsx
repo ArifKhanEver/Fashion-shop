@@ -83,7 +83,7 @@ export default async function AdminOrderDetailsPage({ params }: { params: Promis
             </div>
             
             <div className="divide-y divide-gray-100">
-              {order.items.map(item => (
+              {order.items.map((item: any) => (
                 <div key={item.id} className="p-5 md:p-6 flex flex-col sm:flex-row gap-4 sm:items-center">
                   <div className="w-16 h-20 bg-gray-50 rounded-lg overflow-hidden border border-gray-100 shrink-0">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
