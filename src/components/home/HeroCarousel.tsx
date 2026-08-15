@@ -16,7 +16,7 @@ const SLIDES = [
     href: "/shop",
     bgColor: "#E91E8C",
     textColor: "white",
-    image: "https://res.cloudinary.com/demo/image/upload/v1/samples/ecommerce/shoes.png",
+    image: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=600&q=80",
   },
   {
     id: 2,
@@ -26,7 +26,7 @@ const SLIDES = [
     href: "/category/luxury-edit-heels",
     bgColor: "#1a1a2e",
     textColor: "white",
-    image: "https://res.cloudinary.com/demo/image/upload/v1/samples/ecommerce/shoes.png",
+    image: "https://images.unsplash.com/photo-1595341888016-a392ef81b7de?w=600&q=80",
   },
   {
     id: 3,
@@ -36,7 +36,7 @@ const SLIDES = [
     href: "/category/luxury-bags",
     bgColor: "#2d1b69",
     textColor: "white",
-    image: "https://res.cloudinary.com/demo/image/upload/v1/samples/ecommerce/shoes.png",
+    image: "https://images.unsplash.com/photo-1590874103328-eac38a683ce7?w=600&q=80",
   },
 ];
 
