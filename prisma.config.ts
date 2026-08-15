@@ -4,7 +4,7 @@ import { defineConfig } from "prisma/config";
 export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {
-    seed: "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
+    seed: "ts-node --project tsconfig.seed.json prisma/seed.ts"
   },
   datasource: {
     // DATABASE_URL format: mysql://USER:PASSWORD@HOST:3306/DBNAME
