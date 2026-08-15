@@ -7,14 +7,18 @@ import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import bcrypt from "bcryptjs";
 
 function parseMysqlUrl(url: string) {
-  const u = new URL(url);
+  // Strip the ?ssl-mode=REQUIRED query string for URL parsing
+  const cleanUrl = url.split("?")[0];
+  const params = new URLSearchParams(url.includes("?") ? url.split("?")[1] : "");
+  const sslMode = params.get("ssl-mode");
+  const u = new URL(cleanUrl);
   return {
     host: u.hostname,
     port: Number(u.port) || 3306,
     user: decodeURIComponent(u.username),
     password: decodeURIComponent(u.password),
     database: u.pathname.replace("/", ""),
-    ssl: { rejectUnauthorized: false },
+    ...(sslMode === "REQUIRED" ? { ssl: { rejectUnauthorized: false } } : {}),
     connectionLimit: 5,
     connectTimeout: 30000,
   };
