@@ -17,12 +17,24 @@ interface GetProductsFilters {
   page?: number;
   pageSize?: number;
   searchQuery?: string;
-  colors?: string[]; // array of color strings
-  sort?: string; // "newest", "featured", "price_asc", "price_desc"
+  colors?: string[];
+  sort?: string; // "newest" | "featured" | "price_asc" | "price_desc"
+  categorySlug?: string; // filter by category slug
+  minPrice?: number; // minimum price filter
+  maxPrice?: number; // maximum price filter
 }
 
 export async function getProducts(filters: GetProductsFilters = {}) {
-  const { page = 1, pageSize = 12, searchQuery = "", colors = [], sort = "newest" } = filters;
+  const {
+    page = 1,
+    pageSize = 12,
+    searchQuery = "",
+    colors = [],
+    sort = "newest",
+    categorySlug = "",
+    minPrice,
+    maxPrice,
+  } = filters;
   const skip = (page - 1) * pageSize;
 
   const where: any = {
@@ -44,6 +56,22 @@ export async function getProducts(filters: GetProductsFilters = {}) {
     };
   }
 
+  // ── Category filter ──────────────────────────────────────────────────────
+  if (categorySlug) {
+    where.categories = {
+      some: {
+        category: { slug: categorySlug },
+      },
+    };
+  }
+
+  // ── Price range filter ───────────────────────────────────────────────────
+  if (minPrice !== undefined || maxPrice !== undefined) {
+    where.price = {};
+    if (minPrice !== undefined) where.price.gte = minPrice;
+    if (maxPrice !== undefined) where.price.lte = maxPrice;
+  }
+
   let orderBy: any = { createdAt: "desc" };
   if (sort === "featured") orderBy = { isFeatured: "desc" };
   if (sort === "price_asc") orderBy = { price: "asc" };
@@ -58,6 +86,7 @@ export async function getProducts(filters: GetProductsFilters = {}) {
       include: {
         images: { orderBy: { sortOrder: "asc" }, take: 1 },
         variants: true,
+        categories: { include: { category: { select: { name: true, slug: true } } } },
       },
     }),
     prisma.product.count({ where }),
