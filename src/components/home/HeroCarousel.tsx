@@ -116,14 +116,14 @@ export default function HeroCarousel() {
       {/* Navigation Arrows */}
       <button
         onClick={scrollPrev}
-        className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-md transition-all hover:scale-110"
+        className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-md transition-all hover:scale-110 cursor-pointer"
         aria-label="Previous slide"
       >
         <ChevronLeft className="h-5 w-5 text-gray-700" />
       </button>
       <button
         onClick={scrollNext}
-        className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-md transition-all hover:scale-110"
+        className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-md transition-all hover:scale-110 cursor-pointer"
         aria-label="Next slide"
       >
         <ChevronRight className="h-5 w-5 text-gray-700" />
@@ -135,7 +135,7 @@ export default function HeroCarousel() {
           <button
             key={i}
             onClick={() => emblaApi?.scrollTo(i)}
-            className={`rounded-full transition-all duration-300 ${
+            className={`rounded-full transition-all duration-300 cursor-pointer ${
               i === selectedIndex
                 ? "w-6 h-2 bg-white"
                 : "w-2 h-2 bg-white/50"
