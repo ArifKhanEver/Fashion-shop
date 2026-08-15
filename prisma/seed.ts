@@ -8,7 +8,7 @@ import bcrypt from "bcryptjs";
 
 function parseMysqlUrl(url: string) {
   // Strip the ?ssl-mode=REQUIRED query string for URL parsing
-  const cleanUrl = url.split("?")[0];
+  const cleanUrl = url.split("?")[0]!;
   const params = new URLSearchParams(url.includes("?") ? url.split("?")[1] : "");
   const sslMode = params.get("ssl-mode");
   const u = new URL(cleanUrl);
