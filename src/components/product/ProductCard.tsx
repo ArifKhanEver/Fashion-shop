@@ -72,7 +72,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center pointer-events-none md:pointer-events-auto">
           <button 
             onClick={handleQuickAdd}
-            className="bg-white/95 backdrop-blur text-gray-900 font-semibold px-6 py-2.5 rounded-full shadow-lg translate-y-4 group-hover:translate-y-0 transition-all duration-300 hover:bg-[#E91E8C] hover:text-white flex items-center gap-2"
+            className="bg-white/95 backdrop-blur text-gray-900 font-semibold px-6 py-2.5 rounded-full shadow-lg translate-y-4 group-hover:translate-y-0 transition-all duration-300 hover:bg-[#E91E8C] hover:text-white flex items-center gap-2 cursor-pointer"
           >
             <ShoppingCart className="h-4 w-4" />
             Quick Add
