@@ -34,9 +34,9 @@ export default function ShopClient({ products, categories, totalProducts, totalP
   const maxPrice = searchParams.get("maxPrice") ? parseInt(searchParams.get("maxPrice")!) : undefined;
 
   // Determine active price preset label for display
-  const activePricePreset = PRICE_PRESETS.find(
-    (p) => p.min === minPrice && p.max === maxPrice
-  ) ?? PRICE_PRESETS[0];
+  const activePricePreset =
+    PRICE_PRESETS.find((p) => p.min === minPrice && p.max === maxPrice) ??
+    PRICE_PRESETS[0]!;
 
   const updateParams = (updates: Record<string, string | undefined>) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -202,8 +202,8 @@ export default function ShopClient({ products, categories, totalProducts, totalP
                 )}
                 {(minPrice !== undefined || maxPrice !== undefined) && (
                   <span className="inline-flex items-center gap-1 bg-white text-xs font-semibold text-gray-700 px-2.5 py-1 rounded-full border border-pink-200">
-                    {activePricePreset.label}
-                    <button onClick={() => handlePricePreset(PRICE_PRESETS[0])} className="ml-0.5 text-gray-400 hover:text-red-500 cursor-pointer">
+                    {activePricePreset?.label ?? "Custom Range"}
+                    <button onClick={() => handlePricePreset(PRICE_PRESETS[0]!)} className="ml-0.5 text-gray-400 hover:text-red-500 cursor-pointer">
                       <X className="h-3 w-3" />
                     </button>
                   </span>
