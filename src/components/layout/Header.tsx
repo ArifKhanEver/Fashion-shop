@@ -136,7 +136,7 @@ export default function Header() {
               </Link>
               {/* Mobile menu toggle */}
               <button
-                className="p-2 md:hidden text-gray-600 hover:text-[#E91E8C]"
+                className="p-2 md:hidden text-gray-600 hover:text-[#E91E8C] cursor-pointer"
                 onClick={() => setMobileOpen((v) => !v)}
                 aria-label="Menu"
               >
