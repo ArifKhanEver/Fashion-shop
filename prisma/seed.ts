@@ -2,8 +2,27 @@ import dotenv from "dotenv";
 dotenv.config({ path: ".env.local" });
 dotenv.config();
 
-import { prisma } from "../src/lib/prisma";
+import { PrismaClient } from "@prisma/client";
+import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import bcrypt from "bcryptjs";
+
+function parseMysqlUrl(url: string) {
+  const u = new URL(url);
+  return {
+    host: u.hostname,
+    port: Number(u.port) || 3306,
+    user: decodeURIComponent(u.username),
+    password: decodeURIComponent(u.password),
+    database: u.pathname.replace("/", ""),
+    ssl: { rejectUnauthorized: false },
+    connectionLimit: 5,
+    connectTimeout: 30000,
+  };
+}
+
+const connectionString = process.env.DATABASE_URL!;
+const adapter = new PrismaMariaDb(parseMysqlUrl(connectionString));
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
   console.log("🌱 Seeding database...");
