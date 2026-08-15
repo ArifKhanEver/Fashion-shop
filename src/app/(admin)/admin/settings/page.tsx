@@ -27,8 +27,8 @@ export default async function AdminSettingsPage() {
                 <input 
                   name="store_name"
                   type="text" 
-                  defaultValue={settings["store_name"] || "CloudyBD"}
-                  placeholder="e.g. CloudyBD"
+                  defaultValue={settings["store_name"] || "DevWonder Fashion"}
+                  placeholder="e.g. DevWonder Fashion"
                   className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E91E8C] transition-shadow"
                 />
               </div>
