@@ -52,7 +52,7 @@ export default function ShopClient({ products, categories, totalProducts, totalP
         
         {/* ── Mobile Filter Toggle ── */}
         <button
-          className="md:hidden flex items-center justify-center gap-2 w-full py-3 bg-white border rounded-xl font-medium shadow-sm"
+          className="md:hidden flex items-center justify-center gap-2 w-full py-3 bg-white border rounded-xl font-medium shadow-sm cursor-pointer"
           onClick={() => setIsMobileFiltersOpen(!isMobileFiltersOpen)}
         >
           <SlidersHorizontal className="h-4 w-4" />
@@ -160,7 +160,7 @@ export default function ShopClient({ products, categories, totalProducts, totalP
               <button 
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
-                className="px-4 py-2 border rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50" 
+                className="px-4 py-2 border rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50 cursor-pointer" 
               >
                 Previous
               </button>
@@ -169,7 +169,7 @@ export default function ShopClient({ products, categories, totalProducts, totalP
                 <button 
                   key={i}
                   onClick={() => handlePageChange(i + 1)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium ${currentPage === i + 1 ? 'bg-[#E91E8C] text-white shadow-sm font-bold' : 'border hover:bg-gray-50'}`}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium cursor-pointer ${currentPage === i + 1 ? 'bg-[#E91E8C] text-white shadow-sm font-bold' : 'border hover:bg-gray-50'}`}
                 >
                   {i + 1}
                 </button>
@@ -178,7 +178,7 @@ export default function ShopClient({ products, categories, totalProducts, totalP
               <button 
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className="px-4 py-2 border rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
+                className="px-4 py-2 border rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50 cursor-pointer"
               >
                 Next
               </button>
