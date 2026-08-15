@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+
+// Force all pages to be dynamically rendered — DB is only available at runtime
+export const dynamic = "force-dynamic";
 import "./globals.css";
 import { CartProvider } from "@/components/cart/CartContext";
 import { Toaster } from "@/components/ui/toaster";
