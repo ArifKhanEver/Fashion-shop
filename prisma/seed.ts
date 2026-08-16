@@ -1,163 +1,196 @@
-import { PrismaClient } from "@prisma/client";
-import { PrismaMariaDb } from "@prisma/adapter-mariadb";
-import dotenv from "dotenv";
-
-dotenv.config({ path: ".env.local" });
-dotenv.config({ path: ".env" });
-
-const connectionString = process.env.DATABASE_URL;
-if (!connectionString) {
-  throw new Error("DATABASE_URL is not set");
-}
-
-const u = new URL(connectionString);
-const adapter = new PrismaMariaDb({
-  host: u.hostname,
-  port: Number(u.port) || 3306,
-  user: decodeURIComponent(u.username),
-  password: decodeURIComponent(u.password),
-  database: u.pathname.replace("/", ""),
-  ssl: { rejectUnauthorized: false },
-});
-
-const prisma = new PrismaClient({ adapter });
+import { config } from "dotenv";
+config({ path: ".env.local" });
+import { OrderStatus } from "@prisma/client";
+import crypto from "crypto";
 
 async function main() {
-  console.log("Clearing old data...");
-  await prisma.orderItem.deleteMany();
-  await prisma.order.deleteMany();
-  await prisma.productImage.deleteMany();
-  await prisma.productVariant.deleteMany();
-  await prisma.productCategory.deleteMany();
-  await prisma.product.deleteMany();
-  await prisma.category.deleteMany();
-  await prisma.siteSetting.deleteMany();
+  const { prisma } = await import("../src/lib/prisma.js");
+  console.log("Starting Heavy Data Seeding...");
 
-  console.log("Seeding settings...");
-  await prisma.siteSetting.createMany({
-    data: [
-      { key: "store_name", value: "DevWonder Fashion" },
-      { key: "store_email", value: "contact@fashion.devwonder.shop" },
-      { key: "store_phone", value: "+8801700000000" },
-      { key: "currency", value: "BDT" },
-      { key: "shipping_fee", value: "80" },
-      { key: "free_shipping_threshold", value: "1000" },
-    ],
-  });
+  // 1. Clear existing data
+  console.log("Clearing existing data...");
+  await prisma.orderItem.deleteMany({});
+  await prisma.order.deleteMany({});
+  await prisma.productCategory.deleteMany({});
+  await prisma.productVariant.deleteMany({});
+  await prisma.productImage.deleteMany({});
+  await prisma.product.deleteMany({});
+  await prisma.category.deleteMany({});
+  await prisma.admin.deleteMany({});
+  await prisma.storeSettings.deleteMany({});
 
-  console.log("Seeding categories...");
-  const catBags = await prisma.category.create({
+  // 2. Initialize Store Settings
+  console.log("Seeding StoreSettings...");
+  await prisma.storeSettings.create({
     data: {
-      name: "Luxury Bags",
-      slug: "luxury-bags",
-      description: "Premium imported designer bags",
-      image: "https://images.unsplash.com/photo-1584916201218-f4242ceb4809?q=80&w=600&auto=format&fit=crop",
-      sortOrder: 1,
-    },
+      id: "singleton",
+      storeName: "DevWonder Fashion",
+      headerLogoUrl: "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=200&q=80",
+      phoneNumber: "+880 1700-112233",
+      whatsappNumber: "+8801700112233",
+      deliveryCharge: 80,
+      gaMeasurementId: "G-DEMO12345",
+      metaPixelId: "1234567890",
+      sliderImages: [
+        "https://images.unsplash.com/photo-1540221652346-e5dd6b50f3e7?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=1200&q=80"
+      ]
+    }
   });
 
-  const catHeels = await prisma.category.create({
+  // 3. Create Admin
+  console.log("Seeding Admin...");
+  await prisma.admin.create({
     data: {
-      name: "Designer Heels",
-      slug: "designer-heels",
-      description: "Elegant heels for any occasion",
-      image: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?q=80&w=600&auto=format&fit=crop",
-      sortOrder: 2,
-    },
+      email: "admin@fashion.devwonder.shop",
+      password: "dummy_hashed_password",
+      name: "Super Admin",
+    }
   });
 
-  const catFlats = await prisma.category.create({
-    data: {
-      name: "Comfort Flats",
-      slug: "comfort-flats",
-      description: "Everyday comfort wear",
-      image: "https://images.unsplash.com/photo-1595341888016-a392ef81b7de?q=80&w=600&auto=format&fit=crop",
-      sortOrder: 3,
-    },
-  });
+  // 4. Create 20 Categories
+  console.log("Seeding Categories...");
+  const categoryNames = [
+    "Luxury Heels", "Designer Bags", "Flats & Sandals", "Party Clutch", "Clearance", 
+    "Winter Collection", "Summer Fits", "Bridal Wear", "Office Chic", "Casual Everyday",
+    "Sportswear", "Evening Gowns", "Watches", "Sunglasses", "Jewelry",
+    "Hats & Caps", "Tote Bags", "Sneakers", "Boots", "Premium Scarves"
+  ];
 
-  console.log("Seeding products...");
-  await prisma.product.create({
-    data: {
-      title: "Chanel Classic Flap Bag (Replica)",
-      slug: "chanel-classic-flap-replica",
-      description: "High quality premium replica of the iconic flap bag.",
-      price: 4500,
-      discountedPrice: 3900,
-      isFeatured: true,
-      images: {
-        create: [{ url: "https://images.unsplash.com/photo-1584916201218-f4242ceb4809?q=80&w=600&auto=format&fit=crop", publicId: "dummy1", sortOrder: 0 }],
-      },
-      categories: {
-        create: [{ category: { connect: { id: catBags.id } } }],
-      },
-      variants: {
-        create: [{ color: "Black", stock: 15 }, { color: "Beige", stock: 5 }],
-      },
-    },
-  });
+  const categories = [];
+  for (let i = 0; i < categoryNames.length; i++) {
+    const category = await prisma.category.create({
+      data: {
+        name: categoryNames[i],
+        slug: categoryNames[i].toLowerCase().replace(/ /g, "-"),
+        description: `Explore our collection of premium ${categoryNames[i]}.`,
+        image: `https://source.unsplash.com/random/400x400/?${categoryNames[i].split(" ")[0]},fashion`,
+        sortOrder: i,
+      }
+    });
+    categories.push(category);
+  }
 
-  await prisma.product.create({
-    data: {
-      title: "Stiletto Party Heels - Rose Gold",
-      slug: "stiletto-party-heels-rosegold",
-      description: "Stunning 4-inch stilettos perfect for weddings and parties.",
-      price: 2800,
-      isFeatured: true,
-      images: {
-        create: [{ url: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?q=80&w=600&auto=format&fit=crop", publicId: "dummy2", sortOrder: 0 }],
+  // 5. Create 50 Products (each with 3 variants and images)
+  console.log("Seeding Products and Variants...");
+  const products = [];
+  for (let i = 1; i <= 50; i++) {
+    const title = `Premium Fashion Item ${i}`;
+    const price = Math.floor(Math.random() * (5000 - 1000 + 1)) + 1000; // Between 1000 and 5000
+    
+    // Pick 2 random categories
+    const cat1 = categories[Math.floor(Math.random() * categories.length)];
+    const cat2 = categories[Math.floor(Math.random() * categories.length)];
+    
+    const product = await prisma.product.create({
+      data: {
+        title,
+        slug: `premium-fashion-item-${i}`,
+        description: `This is the ultimate ${title}, perfect for any occasion. Made with premium quality materials.`,
+        price,
+        discountedPrice: i % 5 === 0 ? price - 500 : null, // 1 in 5 items on sale
+        isFeatured: i <= 10, // First 10 are featured
+        categories: {
+          create: [
+            { categoryId: cat1.id },
+            ...(cat1.id !== cat2.id ? [{ categoryId: cat2.id }] : [])
+          ]
+        },
+        images: {
+          create: [
+            { url: `https://images.unsplash.com/photo-${1500000000000 + i}?auto=format&fit=crop&w=600&q=80`, publicId: `dummy_${i}_1` },
+            { url: `https://images.unsplash.com/photo-${1500000000100 + i}?auto=format&fit=crop&w=600&q=80`, publicId: `dummy_${i}_2` }
+          ]
+        },
+        variants: {
+          create: [
+            { color: "Black", size: "M", stock: Math.floor(Math.random() * 50) + 10 },
+            { color: "White", size: "L", stock: Math.floor(Math.random() * 50) + 10 },
+            { color: "Red", size: "S", stock: Math.floor(Math.random() * 50) + 10 },
+          ]
+        }
       },
-      categories: {
-        create: [{ category: { connect: { id: catHeels.id } } }],
-      },
-      variants: {
-        create: [{ size: "36", stock: 10 }, { size: "37", stock: 15 }, { size: "38", stock: 20 }],
-      },
-    },
-  });
+      include: { variants: true }
+    });
+    products.push(product);
+  }
 
-  await prisma.product.create({
-    data: {
-      title: "Everyday Leather Loafers",
-      slug: "everyday-leather-loafers",
-      description: "Soft faux leather loafers for daily office wear.",
-      price: 1500,
-      discountedPrice: 1200,
-      isFeatured: false,
-      images: {
-        create: [{ url: "https://images.unsplash.com/photo-1595341888016-a392ef81b7de?q=80&w=600&auto=format&fit=crop", publicId: "dummy3", sortOrder: 0 }],
-      },
-      categories: {
-        create: [{ category: { connect: { id: catFlats.id } } }],
-      },
-      variants: {
-        create: [{ size: "37", color: "Brown", stock: 30 }, { size: "38", color: "Brown", stock: 30 }],
-      },
-    },
-  });
+  // 6. Create 500 Orders
+  console.log("Seeding 500 Orders (this might take a few seconds)...");
+  
+  const divisions = ["Dhaka", "Chittagong", "Sylhet", "Rajshahi", "Khulna", "Barisal", "Rangpur", "Mymensingh"];
+  const statuses = [OrderStatus.PENDING, OrderStatus.PROCESSING, OrderStatus.SHIPPED, OrderStatus.DELIVERED, OrderStatus.CANCELLED];
+  
+  const orderBatchSize = 100;
+  for (let b = 0; b < 5; b++) { // 5 batches of 100
+    for (let i = 0; i < orderBatchSize; i++) {
+      const orderNumber = (b * orderBatchSize) + i + 1;
+      
+      // Select 1 to 3 random products for this order
+      const numItems = Math.floor(Math.random() * 3) + 1;
+      const selectedProducts = [];
+      for(let j=0; j < numItems; j++) {
+        selectedProducts.push(products[Math.floor(Math.random() * products.length)]);
+      }
 
-  await prisma.product.create({
-    data: {
-      title: "Premium Handcrafted Tote",
-      slug: "premium-handcrafted-tote",
-      description: "Spacious tote bag for everyday essentials.",
-      price: 3200,
-      isFeatured: true,
-      images: {
-        create: [{ url: "https://images.unsplash.com/photo-1590874103328-eac38a683ce7?q=80&w=600&auto=format&fit=crop", publicId: "dummy4", sortOrder: 0 }],
-      },
-      categories: {
-        create: [{ category: { connect: { id: catBags.id } } }],
-      },
-    },
-  });
+      let subtotal = 0;
+      const orderItemsData = selectedProducts.map(p => {
+        const variant = p.variants[Math.floor(Math.random() * p.variants.length)];
+        const quantity = Math.floor(Math.random() * 2) + 1;
+        const unitPrice = Number(p.discountedPrice || p.price);
+        subtotal += (unitPrice * quantity);
 
-  console.log("Seeding complete!");
+        return {
+          productId: p.id,
+          variantId: variant.id,
+          quantity,
+          unitPrice,
+          productTitle: p.title,
+          variantColor: variant.color,
+          variantSize: variant.size,
+          productImageUrl: null,
+        };
+      });
+
+      const deliveryCharge = 80;
+      const totalAmount = subtotal + deliveryCharge;
+      
+      // Random past date within last 30 days
+      const daysAgo = Math.floor(Math.random() * 30);
+      const pastDate = new Date();
+      pastDate.setDate(pastDate.getDate() - daysAgo);
+
+      await prisma.order.create({
+        data: {
+          invoiceNumber: `CDBD-2026-${crypto.randomBytes(3).toString("hex").toUpperCase()}`,
+          customerName: `Customer ${orderNumber}`,
+          customerPhone: `01711${Math.floor(100000 + Math.random() * 900000)}`,
+          customerEmail: `customer${orderNumber}@example.com`,
+          division: divisions[Math.floor(Math.random() * divisions.length)],
+          district: "Test District",
+          fullAddress: `House ${Math.floor(Math.random() * 100)}, Test Street, Test City`,
+          subtotal,
+          deliveryCharge,
+          totalAmount,
+          status: statuses[Math.floor(Math.random() * statuses.length)],
+          createdAt: pastDate,
+          updatedAt: pastDate,
+          items: {
+            create: orderItemsData
+          }
+        }
+      });
+    }
+    console.log(`Seeded ${ (b + 1) * orderBatchSize } orders...`);
+  }
+
+  console.log("✅ Heavy Data Seeding Completed Successfully.");
 }
 
 main()
   .catch((e) => {
-    console.error(e);
+    console.error("Seeding Error:", e);
     process.exit(1);
   })
   .finally(async () => {

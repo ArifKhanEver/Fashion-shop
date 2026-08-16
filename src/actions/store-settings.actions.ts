@@ -7,31 +7,44 @@ import { revalidatePath } from "next/cache";
 // Use React cache to deeply memoize this function within a single render pass
 export const getGlobalStoreSettings = cache(async () => {
   try {
-    const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error("Database timeout")), 3000)
-    );
+    const controller = new AbortController();
+    
+    // Fallback settings
+    const defaultSettings = {
+      id: "singleton",
+      storeName: "DevWonder Fashion",
+      headerLogoUrl: null,
+      phoneNumber: null,
+      whatsappNumber: null,
+      deliveryCharge: 80,
+      gaMeasurementId: null,
+      metaPixelId: null,
+      sliderImages: null,
+      updatedAt: new Date(),
+    };
+
+    if (!prisma.storeSettings) {
+      console.warn("Prisma Client out of sync or old cache. Returning defaults.");
+      return defaultSettings;
+    }
 
     const dbPromise = prisma.storeSettings.findUnique({
       where: { id: "singleton" },
     });
 
-    const settings = await Promise.race([dbPromise, timeoutPromise]);
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      const id = setTimeout(() => reject(new Error("Database timeout")), 10000);
+      controller.signal.addEventListener("abort", () => clearTimeout(id));
+    });
 
-    // Return default settings if none exist yet
-    return (
-      settings ?? {
-        id: "singleton",
-        storeName: "DevWonder Fashion",
-        headerLogoUrl: null,
-        phoneNumber: null,
-        whatsappNumber: null,
-        deliveryCharge: 80,
-        gaMeasurementId: null,
-        metaPixelId: null,
-        sliderImages: null,
-        updatedAt: new Date(),
-      }
-    );
+    try {
+      const settings = await Promise.race([dbPromise, timeoutPromise]);
+      controller.abort(); // Clear timeout
+      return settings ?? defaultSettings;
+    } catch (e) {
+      controller.abort(); // Clear timeout
+      throw e;
+    }
   } catch (error) {
     console.error("Failed to fetch global store settings:", error);
     return {
