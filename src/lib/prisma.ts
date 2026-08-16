@@ -9,7 +9,7 @@ function parseMysqlUrl(url: string) {
     user: decodeURIComponent(u.username),
     password: decodeURIComponent(u.password),
     database: u.pathname.replace("/", ""),
-    ssl: { rejectUnauthorized: false },
+    ssl: { rejectUnauthorized: true },
     connectionLimit: 5,
     connectTimeout: 30000,
     socketTimeout: 60000,
