@@ -96,7 +96,7 @@ export async function getRevenueChartData(days: number = 7) {
       weekday: "short",
     });
     if (dayLabel in dailyTotals) {
-      dailyTotals[dayLabel] += Number(order?.totalAmount || 0);
+      dailyTotals[dayLabel] = (dailyTotals[dayLabel] ?? 0) + Number(order?.totalAmount || 0);
     }
   }
 
