@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Sparkles, ShoppingBag, Zap, Star } from "lucide-react";
+import { ArrowRight, Sparkles, ShoppingBag, Zap, Star, TrendingUp, Gift, Clock } from "lucide-react";
 import ProductCard from "@/components/product/ProductCard";
 import HeroCarousel from "@/components/home/HeroCarousel";
+import CategorySlider from "@/components/home/CategorySlider";
 import { getCategories, getFeaturedProducts, getProducts } from "@/actions/storefront.actions";
 import { getGlobalStoreSettings } from "@/actions/store-settings.actions";
 
@@ -13,14 +14,16 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const [categories, featuredProducts, latestData, settings] = await Promise.all([
+  const [categories, featuredProducts, latestData, trendingData, settings] = await Promise.all([
     getCategories(),
-    getFeaturedProducts(4),
+    getFeaturedProducts(8),
     getProducts({ pageSize: 4, sort: "newest" }),
+    getProducts({ pageSize: 4, sort: "price_desc" }),
     getGlobalStoreSettings(),
   ]);
 
   const latestProducts = latestData.products;
+  const trendingProducts = trendingData.products;
 
   return (
     <>
@@ -42,55 +45,50 @@ export default async function HomePage() {
             </span>
             <span className="hidden sm:block text-pink-200">|</span>
             <span className="flex items-center gap-2">
-              <ShoppingBag className="h-4 w-4" /> Delivery Across Bangladesh
+              <ShoppingBag className="h-4 w-4" /> Fast Delivery Across Bangladesh
+            </span>
+            <span className="hidden sm:block text-pink-200">|</span>
+            <span className="flex items-center gap-2">
+              <Gift className="h-4 w-4" /> Free Gift Wrapping on Orders ৳3,000+
             </span>
           </div>
         </div>
       </section>
 
-      {/* ── Shop by Category ── */}
-      <section className="py-14 sm:py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-10 sm:mb-14">
-            <span className="inline-block px-4 py-1.5 rounded-full bg-pink-50 text-[#E91E8C] font-bold text-xs tracking-widest uppercase mb-3">
-              Collections
-            </span>
-            <h2 className="text-2xl md:text-3xl lg:text-4xl font-extrabold text-gray-900 mb-3">
-              Shop by Category
-            </h2>
-            <p className="text-gray-500 max-w-2xl mx-auto text-sm sm:text-base">
-              Browse our exclusive range of categories tailored for every occasion.
+      {/* ── Category Horizontal Slider ── */}
+      <CategorySlider categories={categories} />
+
+      {/* ── Special Offer Banner ── */}
+      <section className="mx-4 sm:mx-6 lg:mx-auto lg:max-w-7xl my-2 rounded-3xl overflow-hidden">
+        <div className="relative bg-gradient-to-r from-violet-600 via-purple-600 to-[#E91E8C] text-white p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-6">
+          {/* Decorative shapes */}
+          <div className="absolute right-0 top-0 w-96 h-full opacity-10 pointer-events-none overflow-hidden">
+            <div className="absolute -right-10 -top-10 w-64 h-64 rounded-full border-4 border-white" />
+            <div className="absolute -right-20 top-20 w-48 h-48 rounded-full border-4 border-white" />
+          </div>
+
+          <div className="relative z-10 text-center md:text-left">
+            <div className="inline-flex items-center gap-2 bg-white/20 rounded-full px-4 py-1.5 text-xs font-bold tracking-widest uppercase mb-4">
+              <Gift className="h-3.5 w-3.5" /> Limited Time Offer
+            </div>
+            <h2 className="text-3xl md:text-4xl font-extrabold mb-2">Get 15% OFF Your First Order!</h2>
+            <p className="text-white/80 text-base md:text-lg max-w-lg">
+              Use code <span className="bg-white/20 px-2 py-0.5 rounded font-mono font-bold tracking-wider">WELCOME15</span> at checkout. Valid on orders above ৳2,000.
             </p>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4 sm:gap-6">
-            {categories.map((cat) => (
-              <Link
-                key={cat.id}
-                href={`/category/${cat.slug}`}
-                className="group flex flex-col items-center text-center space-y-3 cursor-pointer"
-              >
-                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-pink-50 flex items-center justify-center overflow-hidden border-2 border-pink-100 group-hover:border-[#E91E8C] group-hover:scale-110 group-hover:shadow-xl group-hover:shadow-pink-200/60 transition-all duration-300">
-                  {cat.image ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={cat.image} alt={cat.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-4xl">👠</span>
-                  )}
-                </div>
-                <span className="font-semibold text-gray-800 text-xs sm:text-sm group-hover:text-[#E91E8C] transition-colors leading-tight">
-                  {cat.name}
-                </span>
-              </Link>
-            ))}
-            {categories.length === 0 && (
-              <p className="col-span-full text-center text-gray-400 py-8">No categories found.</p>
-            )}
+          <div className="relative z-10 shrink-0">
+            <Link
+              href="/shop"
+              className="inline-flex items-center gap-2 bg-white text-[#E91E8C] font-extrabold px-8 py-4 rounded-full hover:bg-pink-50 transition-all hover:scale-105 shadow-lg text-sm"
+            >
+              Shop Now <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
         </div>
       </section>
 
-      {/* ── Hot Deals ── */}
+      {/* ── Hot Deals (Featured) ── */}
       <section className="py-14 sm:py-20 bg-gradient-to-br from-pink-50 to-rose-50 border-y border-pink-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-end justify-between mb-8 sm:mb-12">
@@ -112,7 +110,7 @@ export default async function HomePage() {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
-            {featuredProducts.map((product) => (
+            {featuredProducts.slice(0, 4).map((product) => (
               <ProductCard
                 key={`hot-${product.id}`}
                 product={{
@@ -143,14 +141,60 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── Latest Collection ── */}
+      {/* ── Trending Now ── */}
       <section className="py-14 sm:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-end justify-between mb-8 sm:mb-12">
             <div>
-              <span className="inline-block text-[#E91E8C] text-xs font-bold tracking-widest uppercase mb-2">Just In</span>
+              <div className="flex items-center gap-2 text-amber-500 mb-2">
+                <TrendingUp className="h-5 w-5" />
+                <span className="font-bold tracking-wider uppercase text-xs sm:text-sm">Premium Picks</span>
+              </div>
               <h2 className="text-2xl md:text-3xl lg:text-4xl font-extrabold text-gray-900">
-                Latest Arrivals
+                Trending Now
+              </h2>
+            </div>
+            <Link
+              href="/shop?sort=price_desc"
+              className="hidden sm:flex items-center gap-1.5 text-sm font-semibold text-gray-500 hover:text-[#E91E8C] hover:underline"
+            >
+              Explore all <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+            {trendingProducts.map((product) => (
+              <ProductCard
+                key={`trending-${product.id}`}
+                product={{
+                  id: product.id,
+                  title: product.title,
+                  slug: product.slug,
+                  image: product.images[0]?.url ?? "/placeholder-product.jpg",
+                  price: product.discountedPrice ? Number(product.discountedPrice) : Number(product.price),
+                  originalPrice: product.discountedPrice ? Number(product.price) : undefined,
+                  discountPercent: product.discountedPrice ? Math.round(((Number(product.price) - Number(product.discountedPrice)) / Number(product.price)) * 100) : undefined,
+                }}
+              />
+            ))}
+          </div>
+          {trendingProducts.length === 0 && (
+            <p className="text-center text-gray-500 py-8">No trending products at the moment.</p>
+          )}
+        </div>
+      </section>
+
+      {/* ── New Arrivals ── */}
+      <section className="py-14 sm:py-20 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-end justify-between mb-8 sm:mb-12">
+            <div>
+              <div className="flex items-center gap-2 text-emerald-500 mb-2">
+                <Clock className="h-5 w-5" />
+                <span className="font-bold tracking-wider uppercase text-xs sm:text-sm">Just In</span>
+              </div>
+              <h2 className="text-2xl md:text-3xl lg:text-4xl font-extrabold text-gray-900">
+                New Arrivals
               </h2>
             </div>
             <Link
@@ -180,6 +224,26 @@ export default async function HomePage() {
           {latestProducts.length === 0 && (
             <p className="text-center text-gray-500 py-8">No products available at the moment.</p>
           )}
+        </div>
+      </section>
+
+      {/* ── USP Feature Grid ── */}
+      <section className="py-16 bg-white border-t border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {[
+              { emoji: "🚚", title: "Fast Delivery", desc: "Dhaka: 1-2 days | Outside: 3-5 days" },
+              { emoji: "💳", title: "Cash on Delivery", desc: "Pay when you receive your order" },
+              { emoji: "🔄", title: "Easy Returns", desc: "3-day hassle-free return policy" },
+              { emoji: "🏆", title: "Premium Quality", desc: "Every item is quality-checked" },
+            ].map((feature) => (
+              <div key={feature.title} className="text-center p-6 rounded-2xl bg-gray-50 hover:bg-pink-50 hover:shadow-md transition-all group">
+                <div className="text-4xl mb-3">{feature.emoji}</div>
+                <h3 className="font-bold text-gray-900 mb-1 group-hover:text-[#E91E8C] transition-colors">{feature.title}</h3>
+                <p className="text-gray-500 text-xs sm:text-sm">{feature.desc}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 

@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ChevronRight, SlidersHorizontal, ChevronDown, X, Tag } from "lucide-react";
+import { ChevronRight, SlidersHorizontal, ChevronDown, X, Tag, Search } from "lucide-react";
 import ProductCard from "@/components/product/ProductCard";
 
 // ─── Price Preset Options ─────────────────────────────────────────────────────
@@ -28,6 +28,7 @@ interface ShopClientProps {
   totalProducts: number;
   totalPages: number;
   currentPage: number;
+  initialSearchQuery?: string;
 }
 
 // ─── Helper Functions ─────────────────────────────────────────────────────────
@@ -95,16 +96,20 @@ export default function ShopClient({
   totalProducts,
   totalPages,
   currentPage,
+  initialSearchQuery = "",
 }: ShopClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
+  // Local search input state — only committed to URL on form submit
+  const [searchInput, setSearchInput] = useState(initialSearchQuery);
 
   // Read the active filter state from the URL so that filter state is
   // bookmark-able and shareable (e.g., /shop?category=luxury-bags&minPrice=2000)
   const sort = searchParams.get("sort") || "newest";
   const categorySlug = searchParams.get("category") || "";
+  const searchQuery = searchParams.get("q") || "";
   const minPrice = searchParams.get("minPrice")
     ? parseInt(searchParams.get("minPrice")!)
     : undefined;
@@ -118,7 +123,7 @@ export default function ShopClient({
     PRICE_PRESETS[0]!;
 
   const hasActiveFilters =
-    Boolean(categorySlug) || minPrice !== undefined || maxPrice !== undefined;
+    Boolean(categorySlug) || minPrice !== undefined || maxPrice !== undefined || Boolean(searchQuery);
 
   const activeCategory = categories.find((cat: any) => cat.slug === categorySlug);
 
@@ -152,7 +157,7 @@ export default function ShopClient({
     setIsMobileFiltersOpen(false);
   }
 
-  function handlePricePreset(preset: typeof PRICE_PRESETS[0]) {
+  function handlePricePreset(preset: (typeof PRICE_PRESETS)[0]) {
     updateFilterParams({
       minPrice: preset.min !== undefined ? String(preset.min) : undefined,
       maxPrice: preset.max !== undefined ? String(preset.max) : undefined,
@@ -166,9 +171,19 @@ export default function ShopClient({
   }
 
   function clearAllFilters() {
+    setSearchInput("");
     router.push("/shop");
     setIsMobileFiltersOpen(false);
   }
+
+  const handleSearchSubmit = useCallback(
+    (event: React.FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      updateFilterParams({ q: searchInput.trim() || undefined });
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [searchInput, searchParams]
+  );
 
   // ─── Render ──────────────────────────────────────────────────────────────
 
@@ -308,14 +323,37 @@ export default function ShopClient({
         {/* ── Main Content Area ── */}
         <main className="flex-1 min-w-0">
 
+          {/* Search Bar */}
+          <form onSubmit={handleSearchSubmit} className="mb-4">
+            <div className="relative">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <input
+                type="text"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                placeholder="Search products by name..."
+                className="w-full pl-11 pr-24 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#E91E8C] focus:border-[#E91E8C] text-sm shadow-sm transition-all"
+              />
+              <button
+                type="submit"
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-[#E91E8C] text-white text-xs font-bold px-4 py-1.5 rounded-lg hover:bg-[#d8157a] transition-colors cursor-pointer"
+              >
+                Search
+              </button>
+            </div>
+          </form>
+
           {/* Sort & Results Count Bar */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between bg-white p-4 rounded-xl border border-gray-100 shadow-sm mb-6 gap-4">
             <p className="text-sm text-gray-500 font-medium">
-              {hasActiveFilters ? (
+              {hasActiveFilters || searchQuery ? (
                 <>
                   <span className="text-gray-900 font-bold">{products.length}</span>
                   {" "}of{" "}
-                  <span className="text-gray-900">{totalProducts}</span> filtered results
+                  <span className="text-gray-900">{totalProducts}</span>
+                  {searchQuery ? (
+                    <> results for <span className="text-[#E91E8C] font-bold">&ldquo;{searchQuery}&rdquo;</span></>
+                  ) : " filtered results"}
                 </>
               ) : (
                 <>
