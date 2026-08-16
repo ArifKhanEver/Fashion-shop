@@ -24,7 +24,13 @@ const CATEGORIES = [
   { name: "Z-STYLE HEELS", slug: "z-style-heels" },
 ];
 
-export default function Header() {
+export default function Header({
+  logoUrl,
+  storeName = "DEVWONDER FASHION",
+}: {
+  logoUrl?: string | null;
+  storeName?: string;
+}) {
   const { itemCount } = useCart();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
@@ -41,6 +47,9 @@ export default function Header() {
     [searchQuery, router]
   );
 
+  // Derive initials if no logo is provided
+  const storeInitials = storeName ? storeName.charAt(0).toUpperCase() : "D";
+
   return (
     <header className="sticky top-0 z-50 bg-white shadow-sm">
       {/* ── Top Bar ───────────────────────────────────────── */}
@@ -49,14 +58,21 @@ export default function Header() {
           <div className="flex items-center justify-between h-16 gap-4">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2 shrink-0">
-              <div className="flex items-center gap-1.5">
-                <div className="w-8 h-8 rounded-full bg-[#E91E8C] flex items-center justify-center">
-                  <span className="text-white text-xs font-bold">D</span>
-                </div>
-                <span className="text-xl font-extrabold tracking-tight">
-                  <span className="text-[#E91E8C]">DEVWONDER</span>
-                  <span className="text-gray-900"> FASHION</span>
-                </span>
+              <div className="flex items-center gap-2">
+                {logoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={logoUrl} alt={storeName} className="h-10 w-auto rounded object-contain" />
+                ) : (
+                  <>
+                    <div className="w-8 h-8 rounded-full bg-[#E91E8C] flex items-center justify-center">
+                      <span className="text-white text-xs font-bold">{storeInitials}</span>
+                    </div>
+                    <span className="text-xl font-extrabold tracking-tight">
+                      <span className="text-[#E91E8C]">{storeName.split(" ")[0] || "DEVWONDER"}</span>
+                      <span className="text-gray-900"> {storeName.split(" ").slice(1).join(" ") || "FASHION"}</span>
+                    </span>
+                  </>
+                )}
               </div>
             </Link>
 

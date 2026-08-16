@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { formatPrice } from "@/lib/utils";
@@ -16,10 +16,21 @@ export default function CheckoutPage() {
   const [division, setDivision] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Delivery Fee Logic
-  let deliveryCharge = 0;
-  if (division) {
-    deliveryCharge = division === "Dhaka" ? 60 : 120;
+  const [baseDeliveryCharge, setBaseDeliveryCharge] = useState(80);
+  
+  useEffect(() => {
+    // Fetch global dynamic delivery charge from DB
+    import("@/actions/store-settings.actions").then((module) => {
+      module.getGlobalStoreSettings().then((settings) => setBaseDeliveryCharge(Number(settings.deliveryCharge) || 80));
+    });
+  }, []);
+
+  // Delivery Fee Logic (fallback logic if needed, but we use the global charge now)
+  let deliveryCharge = baseDeliveryCharge;
+  if (division && division !== "Dhaka") {
+    // Optionally add a surcharge for outside Dhaka, or just use the base charge.
+    // Assuming the user just wants the dynamic global delivery charge to apply.
+    deliveryCharge = baseDeliveryCharge + 40; // Outside dhaka surcharge
   }
   
   const total = subtotal + deliveryCharge;

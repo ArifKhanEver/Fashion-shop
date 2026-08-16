@@ -15,7 +15,17 @@ const SUPPORT_LINKS = [
   { label: "Shop All", href: "/shop" },
 ];
 
-export default function Footer() {
+export default function Footer({
+  logoUrl,
+  storeName = "DEVWONDER FASHION",
+  phoneNumber,
+}: {
+  logoUrl?: string | null;
+  storeName?: string;
+  phoneNumber?: string | null;
+}) {
+  const storeInitials = storeName ? storeName.charAt(0).toUpperCase() : "D";
+
   return (
     <footer className="bg-gray-900 text-gray-300 mt-16">
       {/* ── Main Footer ── */}
@@ -24,12 +34,19 @@ export default function Footer() {
           {/* Brand */}
           <div className="lg:col-span-1">
             <Link href="/" className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-full bg-[#E91E8C] flex items-center justify-center">
-                <span className="text-white text-xs font-bold">D</span>
-              </div>
-              <span className="text-xl font-extrabold text-white">
-                DEVWONDER <span className="text-[#E91E8C]">FASHION</span>
-              </span>
+              {logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={logoUrl} alt={storeName} className="h-10 w-auto rounded object-contain" />
+              ) : (
+                <>
+                  <div className="w-8 h-8 rounded-full bg-[#E91E8C] flex items-center justify-center">
+                    <span className="text-white text-xs font-bold">{storeInitials}</span>
+                  </div>
+                  <span className="text-xl font-extrabold text-white">
+                    {storeName.split(" ")[0] || "DEVWONDER"} <span className="text-[#E91E8C]">{storeName.split(" ").slice(1).join(" ") || "FASHION"}</span>
+                  </span>
+                </>
+              )}
             </Link>
             <p className="text-sm text-gray-400 leading-relaxed mb-5">
               Your daily fashion companion. Discover premium heels, luxury bags,
@@ -119,7 +136,7 @@ export default function Footer() {
             <ul className="space-y-3">
               <li className="flex items-start gap-2.5">
                 <Phone className="h-4 w-4 text-[#E91E8C] mt-0.5 shrink-0" />
-                <span className="text-sm text-gray-400">+880 1700-000000</span>
+                <span className="text-sm text-gray-400">{phoneNumber || "+880 1700-000000"}</span>
               </li>
               <li className="flex items-start gap-2.5">
                 <Mail className="h-4 w-4 text-[#E91E8C] mt-0.5 shrink-0" />

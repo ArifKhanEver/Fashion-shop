@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Minus, Plus, Trash2, ArrowRight, ShoppingBag } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
@@ -11,17 +12,7 @@ import { CartItem } from "@/types";
 /** Orders at or above this amount qualify for the reduced delivery rate. */
 const FREE_DELIVERY_THRESHOLD = 1000;
 
-const DELIVERY_CHARGE_STANDARD = 80; // BDT
-const DELIVERY_CHARGE_REDUCED = 60;  // BDT (for orders >= 1000 BDT)
-
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-/** Calculates the delivery charge based on the current subtotal. */
-function calcDeliveryCharge(subtotal: number): number {
-  return subtotal >= FREE_DELIVERY_THRESHOLD
-    ? DELIVERY_CHARGE_REDUCED
-    : DELIVERY_CHARGE_STANDARD;
-}
 
 /** Counts the total number of individual units across all cart line items. */
 function countTotalUnits(items: CartItem[]): number {
@@ -56,11 +47,24 @@ function EmptyCartState() {
 
 export default function CartPage() {
   const { items, updateQuantity, removeItem, subtotal } = useCart();
+  const [baseDeliveryCharge, setBaseDeliveryCharge] = useState(80);
 
-  const deliveryCharge = calcDeliveryCharge(subtotal);
+  useEffect(() => {
+    // Fetch global dynamic delivery charge from DB
+    import("@/actions/store-settings.actions").then((module) => {
+      module.getGlobalStoreSettings().then((settings) => setBaseDeliveryCharge(Number(settings.deliveryCharge) || 80));
+    });
+  }, []);
+
+  const qualifiesForReducedDelivery = subtotal >= FREE_DELIVERY_THRESHOLD;
+  
+  // Calculate final delivery charge (reduced if threshold met, otherwise base)
+  const deliveryCharge = qualifiesForReducedDelivery
+    ? Math.max(0, baseDeliveryCharge - 20) // Give a 20 Tk discount on delivery
+    : baseDeliveryCharge;
+
   const grandTotal = subtotal + deliveryCharge;
   const totalUnits = countTotalUnits(items);
-  const qualifiesForReducedDelivery = subtotal >= FREE_DELIVERY_THRESHOLD;
 
   if (items.length === 0) {
     return <EmptyCartState />;

@@ -4,6 +4,7 @@ import { ArrowRight, Sparkles, ShoppingBag, Zap, Star } from "lucide-react";
 import ProductCard from "@/components/product/ProductCard";
 import HeroCarousel from "@/components/home/HeroCarousel";
 import { getCategories, getFeaturedProducts, getProducts } from "@/actions/storefront.actions";
+import { getGlobalStoreSettings } from "@/actions/store-settings.actions";
 
 export const metadata: Metadata = {
   title: "DevWonder Fashion — Your Daily Fashion Companion",
@@ -12,10 +13,11 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const [categories, featuredProducts, latestData] = await Promise.all([
+  const [categories, featuredProducts, latestData, settings] = await Promise.all([
     getCategories(),
     getFeaturedProducts(4),
     getProducts({ pageSize: 4, sort: "newest" }),
+    getGlobalStoreSettings(),
   ]);
 
   const latestProducts = latestData.products;
@@ -24,7 +26,7 @@ export default async function HomePage() {
     <>
       {/* ── Hero Carousel ── */}
       <section className="w-full">
-        <HeroCarousel />
+        <HeroCarousel sliderImages={settings.sliderImages as string[] | undefined} />
       </section>
 
       {/* ── Trust Bar ── */}

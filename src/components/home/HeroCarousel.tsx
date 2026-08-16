@@ -40,7 +40,7 @@ const SLIDES = [
   },
 ];
 
-export default function HeroCarousel() {
+export default function HeroCarousel({ sliderImages }: { sliderImages?: string[] }) {
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true }, [
     Autoplay({ delay: 4000, stopOnInteraction: false }),
   ]);
@@ -61,11 +61,17 @@ export default function HeroCarousel() {
   const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
   const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
 
+  // Merge static slide content with dynamic images
+  const dynamicSlides = SLIDES.map((slide, i) => ({
+    ...slide,
+    image: sliderImages && sliderImages[i] ? sliderImages[i] : slide.image,
+  }));
+
   return (
     <div className="relative w-full overflow-hidden">
       <div ref={emblaRef} className="overflow-hidden">
         <div className="flex">
-          {SLIDES.map((slide) => (
+          {dynamicSlides.map((slide) => (
             <div
               key={slide.id}
               className="relative flex-none w-full min-h-[380px] sm:min-h-[480px] md:min-h-[560px] flex items-center"
