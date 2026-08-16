@@ -3,26 +3,45 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
-export async function getSettings() {
-  const settings = await prisma.siteSetting.findMany();
+// ─── Read ─────────────────────────────────────────────────────────────────────
+
+/**
+ * Fetches all site settings as a flat key/value map.
+ * Example result: { "store_name": "DevWonder Fashion", "ga_id": "G-XXXXX" }
+ */
+export async function getSettings(): Promise<Record<string, string>> {
+  const allSettings = await prisma.siteSetting.findMany();
+
   const settingsMap: Record<string, string> = {};
-  for (const s of settings) {
-    settingsMap[s.key] = s.value;
+  for (const setting of allSettings) {
+    settingsMap[setting.key] = setting.value;
   }
+
   return settingsMap;
 }
 
+// ─── Write ────────────────────────────────────────────────────────────────────
+
+/**
+ * Creates or updates a single site setting by key.
+ * Revalidates the entire app layout because settings can affect any page
+ * (e.g., analytics IDs, store branding).
+ */
 export async function updateSetting(key: string, value: string) {
   await prisma.siteSetting.upsert({
     where: { key },
     update: { value },
     create: { key, value },
   });
-  
-  // Revalidate everything as settings like Analytics or UI can affect any page
+
   revalidatePath("/", "layout");
 }
 
+/**
+ * Batch-updates multiple site settings from a FormData object (e.g., a settings form).
+ * Each FormData entry key becomes the setting key, and its string value is saved.
+ * Revalidates the entire app layout after saving.
+ */
 export async function updateMultipleSettings(formData: FormData) {
   for (const [key, value] of formData.entries()) {
     if (typeof value === "string") {
@@ -34,6 +53,5 @@ export async function updateMultipleSettings(formData: FormData) {
     }
   }
 
-  // Revalidate global layout to reflect updated script tags or store names
   revalidatePath("/", "layout");
 }

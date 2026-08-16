@@ -5,7 +5,8 @@ import { generateInvoiceNumber, calcDeliveryCharge } from "@/lib/utils";
 import { z } from "zod";
 import { CartItem } from "@/types";
 
-// ─── Checkout Schema ────────────────────────────────────────────────────────
+// ─── Checkout Validation Schema ───────────────────────────────────────────────
+
 const CheckoutSchema = z.object({
   customerName: z.string().min(2, "Name is required"),
   customerPhone: z
@@ -19,12 +20,23 @@ const CheckoutSchema = z.object({
 
 export type CheckoutInput = z.infer<typeof CheckoutSchema>;
 
-// ─── Place Order ────────────────────────────────────────────────────────────
+// ─── Place Order ──────────────────────────────────────────────────────────────
+
+/**
+ * Creates a new customer order from checkout form data and cart contents.
+ *
+ * Steps:
+ * 1. Validate the checkout form with Zod.
+ * 2. Calculate delivery charge based on the customer's division.
+ * 3. Persist the order and all its line items in a single Prisma create call.
+ *
+ * Returns an object with `success: true` and the new `orderId` on success,
+ * or `success: false` with an `error` message on failure.
+ */
 export async function placeOrder(
   formData: CheckoutInput,
   cartItems: CartItem[]
 ): Promise<{ success: boolean; orderId?: string; error?: string }> {
-  // Validate
   const parsed = CheckoutSchema.safeParse(formData);
   if (!parsed.success) {
     return {
@@ -68,6 +80,7 @@ export async function placeOrder(
             variantSize: item.size ?? null,
             productImageUrl: item.imageUrl,
             product: { connect: { id: item.productId } },
+            // Only connect a variant if one was selected
             ...(item.variantId
               ? { variant: { connect: { id: item.variantId } } }
               : {}),
@@ -83,17 +96,28 @@ export async function placeOrder(
   }
 }
 
-// ─── Get Order by ID ────────────────────────────────────────────────────────
+// ─── Customer-Facing Order Queries ────────────────────────────────────────────
+
+/**
+ * Fetches a single order by ID, including all line items with their
+ * associated product and variant details. Used on the order confirmation page.
+ */
 export async function getOrderById(orderId: string) {
   return prisma.order.findUnique({
     where: { id: orderId },
-    include: { items: { include: { product: true, variant: true } } },
+    include: {
+      items: {
+        include: { product: true, variant: true },
+      },
+    },
   });
 }
 
-// ─── Track Order ────────────────────────────────────────────────────────────
+/**
+ * Searches for an order by invoice number, phone number, or order ID.
+ * Used on the public order tracking page. Returns the most recent match.
+ */
 export async function trackOrder(query: string) {
-  // Search by invoice number or phone number
   return prisma.order.findFirst({
     where: {
       OR: [
@@ -102,35 +126,46 @@ export async function trackOrder(query: string) {
         { id: query },
       ],
     },
-    include: { items: { include: { product: true } } },
+    include: {
+      items: { include: { product: true } },
+    },
     orderBy: { createdAt: "desc" },
   });
 }
 
-// ─── Admin: Get All Orders ──────────────────────────────────────────────────
+// ─── Admin Order Actions ──────────────────────────────────────────────────────
+
+/**
+ * Returns a paginated list of all orders for the admin panel.
+ * Optionally filters by order status (e.g., "PENDING", "SHIPPED").
+ * Pass "ALL" or omit the status argument to return orders of any status.
+ */
 export async function adminGetOrders(
   status?: string,
   page = 1,
   pageSize = 20
 ) {
-  const where =
+  const statusFilter =
     status && status !== "ALL" ? { status: status as never } : undefined;
 
   const [orders, total] = await Promise.all([
     prisma.order.findMany({
-      where,
+      where: statusFilter,
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * pageSize,
       take: pageSize,
       include: { items: true },
     }),
-    prisma.order.count({ where }),
+    prisma.order.count({ where: statusFilter }),
   ]);
 
   return { orders, total, pages: Math.ceil(total / pageSize), page };
 }
 
-// ─── Admin: Update Order Status ─────────────────────────────────────────────
+/**
+ * Updates the fulfillment status of an order.
+ * Called from the admin order detail page when the admin changes the status dropdown.
+ */
 export async function adminUpdateOrderStatus(
   orderId: string,
   status: "PENDING" | "PROCESSING" | "SHIPPED" | "DELIVERED" | "CANCELLED"

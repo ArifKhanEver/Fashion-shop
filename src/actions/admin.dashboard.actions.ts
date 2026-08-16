@@ -2,29 +2,48 @@
 
 import { prisma } from "@/lib/prisma";
 
+// ─── KPI Summary ──────────────────────────────────────────────────────────────
+
+/**
+ * Fetches the four key performance indicators shown on the admin dashboard:
+ * - Total Revenue (sum of all non-cancelled orders)
+ * - Total Orders (all time)
+ * - Pending Orders (awaiting fulfillment)
+ * - Low Stock Items (variants with fewer than 10 units remaining)
+ *
+ * All four queries run in parallel for performance.
+ */
 export async function getDashboardKPIs() {
-  const [totalRevenueResult, totalOrders, pendingOrders, lowStockProducts] = await Promise.all([
-    prisma.order.aggregate({
-      where: { status: { not: "CANCELLED" } },
-      _sum: { totalAmount: true }
-    }),
-    prisma.order.count(),
-    prisma.order.count({ where: { status: "PENDING" } }),
-    prisma.productVariant.count({ where: { stock: { lt: 10 } } })
-  ]);
+  const [totalRevenueResult, totalOrders, pendingOrders, lowStockItems] =
+    await Promise.all([
+      prisma.order.aggregate({
+        where: { status: { not: "CANCELLED" } },
+        _sum: { totalAmount: true },
+      }),
+      prisma.order.count(),
+      prisma.order.count({ where: { status: "PENDING" } }),
+      prisma.productVariant.count({ where: { stock: { lt: 10 } } }),
+    ]);
 
   return {
-    totalRevenue: Number(totalRevenueResult._sum.totalAmount || 0),
+    totalRevenue: Number(totalRevenueResult._sum.totalAmount ?? 0),
     totalOrders,
     pendingOrders,
-    lowStockProducts
+    lowStockProducts: lowStockItems,
   };
 }
 
+// ─── Recent Orders ────────────────────────────────────────────────────────────
+
+/**
+ * Fetches the most recent orders for the dashboard activity feed.
+ * Only selects the fields needed for the order list — avoids over-fetching.
+ * @param limit - Number of orders to return (default: 5)
+ */
 export async function getRecentOrders(limit: number = 5) {
-  return await prisma.order.findMany({
+  return prisma.order.findMany({
     take: limit,
-    orderBy: { createdAt: 'desc' },
+    orderBy: { createdAt: "desc" },
     select: {
       id: true,
       invoiceNumber: true,
@@ -32,43 +51,54 @@ export async function getRecentOrders(limit: number = 5) {
       customerPhone: true,
       totalAmount: true,
       status: true,
-      createdAt: true
-    }
+      createdAt: true,
+    },
   });
 }
 
+// ─── Revenue Chart ────────────────────────────────────────────────────────────
+
+/**
+ * Calculates daily revenue totals for the past N days, used to render the
+ * line chart on the admin dashboard.
+ *
+ * Returns an array like: [{ name: "Mon", total: 4200 }, { name: "Tue", total: 1800 }, ...]
+ *
+ * @param days - How many past days to include (default: 7)
+ */
 export async function getRevenueChartData(days: number = 7) {
   const startDate = new Date();
   startDate.setDate(startDate.getDate() - days);
 
-  const orders = await prisma.order.findMany({
+  const recentOrders = await prisma.order.findMany({
     where: {
       createdAt: { gte: startDate },
-      status: { not: "CANCELLED" }
+      status: { not: "CANCELLED" },
     },
     select: {
       totalAmount: true,
-      createdAt: true
-    }
+      createdAt: true,
+    },
   });
 
-  const chartData: Record<string, number> = {};
-  
-  // Initialize last X days
-  for (let i = days - 1; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    const dayStr = d.toLocaleDateString("en-US", { weekday: 'short' }); // e.g. "Mon"
-    chartData[dayStr] = 0;
+  // Initialise a bucket for each of the past N days, starting at 0
+  const dailyTotals: Record<string, number> = {};
+  for (let daysAgo = days - 1; daysAgo >= 0; daysAgo--) {
+    const date = new Date();
+    date.setDate(date.getDate() - daysAgo);
+    const dayLabel = date.toLocaleDateString("en-US", { weekday: "short" }); // e.g. "Mon"
+    dailyTotals[dayLabel] = 0;
   }
 
-  // Aggregate
-  for (const order of orders) {
-    const dayStr = order.createdAt.toLocaleDateString("en-US", { weekday: 'short' });
-    if (chartData[dayStr] !== undefined) {
-      chartData[dayStr] += Number(order.totalAmount);
+  // Accumulate order revenue into the correct day bucket
+  for (const order of recentOrders) {
+    const dayLabel = order.createdAt.toLocaleDateString("en-US", {
+      weekday: "short",
+    });
+    if (dayLabel in dailyTotals) {
+      dailyTotals[dayLabel] += Number(order.totalAmount);
     }
   }
 
-  return Object.entries(chartData).map(([name, total]) => ({ name, total }));
+  return Object.entries(dailyTotals).map(([name, total]) => ({ name, total }));
 }

@@ -4,7 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
-// ─── Zod Schemas ────────────────────────────────────────────────────────────
+// ─── Validation Schemas ───────────────────────────────────────────────────────
+// These schemas enforce the shape of data coming from the admin forms.
 
 const ProductImageSchema = z.object({
   url: z.string().url(),
@@ -35,10 +36,19 @@ const ProductInputSchema = z.object({
 
 export type ProductInput = z.infer<typeof ProductInputSchema>;
 
-// ─── Fetch ──────────────────────────────────────────────────────────────────
+// ─── Read ─────────────────────────────────────────────────────────────────────
 
-export async function adminGetProducts(searchQuery: string = "", page: number = 1, pageSize: number = 20) {
+/**
+ * Returns a paginated list of all products (including inactive) for the admin panel.
+ * Supports an optional full-text search across title and slug fields.
+ */
+export async function adminGetProducts(
+  searchQuery: string = "",
+  page: number = 1,
+  pageSize: number = 20
+) {
   const skip = (page - 1) * pageSize;
+
   const where = searchQuery
     ? {
         OR: [
@@ -71,6 +81,10 @@ export async function adminGetProducts(searchQuery: string = "", page: number = 
   };
 }
 
+/**
+ * Fetches a single product by ID for the admin edit form.
+ * Includes all related images, variants, and category associations.
+ */
 export async function adminGetProductById(id: string) {
   return prisma.product.findUnique({
     where: { id },
@@ -82,37 +96,42 @@ export async function adminGetProductById(id: string) {
   });
 }
 
-// ─── Create ─────────────────────────────────────────────────────────────────
+// ─── Create ───────────────────────────────────────────────────────────────────
 
+/**
+ * Creates a new product with its images, variants, and category associations.
+ * Validates input with Zod before writing to the database.
+ * Revalidates the shop and homepage caches after creation.
+ */
 export async function adminCreateProduct(data: ProductInput) {
   const parsed = ProductInputSchema.safeParse(data);
   if (!parsed.success) {
     throw new Error(parsed.error.issues[0]?.message ?? "Validation error");
   }
 
-  const { categoryIds, images, variants, ...productData } = parsed.data;
+  const { categoryIds, images, variants, ...coreProductData } = parsed.data;
 
   const product = await prisma.product.create({
     data: {
-      ...productData,
+      ...coreProductData,
       categories: {
-        create: categoryIds.map((id) => ({
-          category: { connect: { id } },
+        create: categoryIds.map((categoryId) => ({
+          category: { connect: { id: categoryId } },
         })),
       },
       images: {
-        create: images.map((img) => ({
-          url: img.url,
-          publicId: img.publicId,
-          altText: img.altText,
-          sortOrder: img.sortOrder,
+        create: images.map((image) => ({
+          url: image.url,
+          publicId: image.publicId,
+          altText: image.altText,
+          sortOrder: image.sortOrder,
         })),
       },
       variants: {
-        create: variants.map((v) => ({
-          color: v.color,
-          size: v.size,
-          stock: v.stock,
+        create: variants.map((variant) => ({
+          color: variant.color,
+          size: variant.size,
+          stock: variant.stock,
         })),
       },
     },
@@ -121,91 +140,95 @@ export async function adminCreateProduct(data: ProductInput) {
   revalidatePath("/admin/products");
   revalidatePath("/shop");
   revalidatePath("/");
-  
+
   return product;
 }
 
-// ─── Update ─────────────────────────────────────────────────────────────────
+// ─── Update ───────────────────────────────────────────────────────────────────
 
+/**
+ * Updates an existing product inside a database transaction.
+ *
+ * The update strategy per relation:
+ * - Categories: delete all existing associations, then recreate them.
+ * - Images:     delete all existing images, then recreate them.
+ * - Variants:   upsert — update existing ones by ID, create new ones,
+ *               and delete variants that were removed. (We avoid deleting
+ *               variants referenced by past orders, but attempt it if needed.)
+ */
 export async function adminUpdateProduct(id: string, data: ProductInput) {
   const parsed = ProductInputSchema.safeParse(data);
   if (!parsed.success) {
     throw new Error(parsed.error.issues[0]?.message ?? "Validation error");
   }
 
-  const { categoryIds, images, variants, ...productData } = parsed.data;
+  const { categoryIds, images, variants, ...coreProductData } = parsed.data;
 
-  // For complex relations like images and variants, 
-  // the safest approach in Prisma is to delete all and recreate them,
-  // or use a transaction with deleteMany + createMany.
-  
-  await prisma.$transaction(async (tx: any) => {
-    // 1. Update basic product info and clear existing relations
-    await tx.product.update({
+  await prisma.$transaction(async (transaction) => {
+    // Step 1: Update the core product fields (title, price, etc.)
+    await transaction.product.update({
       where: { id },
-      data: productData,
+      data: coreProductData,
     });
 
-    // 2. Sync Categories (delete existing bindings, create new ones)
-    await tx.productCategory.deleteMany({ where: { productId: id } });
+    // Step 2: Re-sync category associations (full replace)
+    await transaction.productCategory.deleteMany({ where: { productId: id } });
     if (categoryIds.length > 0) {
-      await tx.productCategory.createMany({
-        data: categoryIds.map((categoryId) => ({
-          productId: id,
-          categoryId,
-        })),
+      await transaction.productCategory.createMany({
+        data: categoryIds.map((categoryId) => ({ productId: id, categoryId })),
       });
     }
 
-    // 3. Sync Images (delete all, recreate)
-    await tx.productImage.deleteMany({ where: { productId: id } });
+    // Step 3: Re-sync images (full replace is safe since images have no external references)
+    await transaction.productImage.deleteMany({ where: { productId: id } });
     if (images.length > 0) {
-      await tx.productImage.createMany({
-        data: images.map((img) => ({
+      await transaction.productImage.createMany({
+        data: images.map((image) => ({
           productId: id,
-          url: img.url,
-          publicId: img.publicId,
-          altText: img.altText,
-          sortOrder: img.sortOrder,
+          url: image.url,
+          publicId: image.publicId,
+          altText: image.altText,
+          sortOrder: image.sortOrder,
         })),
       });
     }
 
-    // 4. Sync Variants (delete all, recreate)
-    // Be careful: if OrderItems reference variants, deleting variants might fail if restrict is on.
-    // However, our schema has `onDelete: Cascade` for Product->ProductVariant,
-    // but OrderItem->ProductVariant is just `references: [id]` (meaning restrict by default if not specified).
-    // Wait, OrderItem has `variantId String?`. If we delete a variant, Prisma might throw if an order references it.
-    // Let's check `schema.prisma`. OrderItem -> variant has NO `onDelete: SetNull`. This will throw an error if an order exists.
-    // So we should ideally update existing ones or just avoid deleting variants that are in orders.
-    // For simplicity in this implementation, we will UPSERT variants.
-    
-    const existingVariants = await tx.productVariant.findMany({ where: { productId: id } });
-    const existingVariantIds = new Set(existingVariants.map((v: any) => v.id as string));
-    const incomingVariantIds = new Set(variants.filter((v: any) => v.id).map((v: any) => v.id as string));
+    // Step 4: Smart-sync variants (upsert to preserve order history)
+    const existingVariants = await transaction.productVariant.findMany({
+      where: { productId: id },
+    });
 
-    // Delete variants that are no longer present
-    const variantsToDelete = [...existingVariantIds].filter((id: any) => !incomingVariantIds.has(id));
-    if (variantsToDelete.length > 0) {
-      // NOTE: If an order references these, it will fail. A safer approach in a real app is to mark as 'inactive'
-      // or set variantId to null in OrderItems. We'll attempt delete.
-      await tx.productVariant.deleteMany({ where: { id: { in: variantsToDelete } } });
+    const existingVariantIds = new Set(existingVariants.map((v) => v.id));
+    const incomingVariantIds = new Set(
+      variants.filter((v) => v.id).map((v) => v.id as string)
+    );
+
+    // Remove variants that the admin deleted from the form
+    const variantIdsToDelete = [...existingVariantIds].filter(
+      (existingId) => !incomingVariantIds.has(existingId)
+    );
+    if (variantIdsToDelete.length > 0) {
+      await transaction.productVariant.deleteMany({
+        where: { id: { in: variantIdsToDelete } },
+      });
     }
 
-    // Upsert remaining
-    for (const v of variants) {
-      if (v.id && existingVariantIds.has(v.id)) {
-        await tx.productVariant.update({
-          where: { id: v.id },
-          data: { color: v.color, size: v.size, stock: v.stock },
+    // Update existing variants or create new ones
+    for (const variant of variants) {
+      const isExistingVariant = variant.id && existingVariantIds.has(variant.id);
+
+      if (isExistingVariant) {
+        await transaction.productVariant.update({
+          where: { id: variant.id },
+          data: { color: variant.color, size: variant.size, stock: variant.stock },
         });
       } else {
-        await tx.productVariant.create({
+        await transaction.productVariant.create({
           data: {
             productId: id,
-            color: v.color,
-            size: v.size,
-            stock: v.stock,
+            color: variant.color,
+            size: variant.size,
+            stock: variant.stock,
           },
         });
       }
@@ -220,20 +243,20 @@ export async function adminUpdateProduct(id: string, data: ProductInput) {
   return { success: true };
 }
 
-// ─── Delete ─────────────────────────────────────────────────────────────────
+// ─── Delete ───────────────────────────────────────────────────────────────────
 
+/**
+ * Permanently deletes a product by ID.
+ * Cascading deletes in the schema will handle images and category associations.
+ * NOTE: This will fail if any existing order references this product. Consider
+ * using a soft-delete (isActive: false) if orders must be preserved.
+ */
 export async function adminDeleteProduct(id: string) {
-  // Cascading deletes will handle images and product_categories.
-  // Order items reference Product with no cascade (restrict), so we might fail if order exists.
-  // If it fails, the user will see a 500 error. Ideally, we should soft-delete.
-  
-  await prisma.product.delete({
-    where: { id },
-  });
+  await prisma.product.delete({ where: { id } });
 
   revalidatePath("/admin/products");
   revalidatePath("/shop");
   revalidatePath("/");
-  
+
   return { success: true };
 }

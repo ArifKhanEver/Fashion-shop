@@ -2,8 +2,12 @@
 
 import { prisma } from "@/lib/prisma";
 
-// ─── Categories ─────────────────────────────────────────────────────────────
+// ─── Categories ───────────────────────────────────────────────────────────────
 
+/**
+ * Fetches all active product categories, ordered by their sort position.
+ * Used in the storefront navigation, shop sidebar, and homepage category grid.
+ */
 export async function getCategories() {
   return prisma.category.findMany({
     where: { isActive: true },
@@ -11,19 +15,25 @@ export async function getCategories() {
   });
 }
 
-// ─── Products ───────────────────────────────────────────────────────────────
+// ─── Products ─────────────────────────────────────────────────────────────────
 
+/** Filter options accepted by getProducts */
 interface GetProductsFilters {
   page?: number;
   pageSize?: number;
   searchQuery?: string;
   colors?: string[];
-  sort?: string; // "newest" | "featured" | "price_asc" | "price_desc"
-  categorySlug?: string; // filter by category slug
-  minPrice?: number; // minimum price filter
-  maxPrice?: number; // maximum price filter
+  sort?: "newest" | "featured" | "price_asc" | "price_desc";
+  categorySlug?: string;
+  minPrice?: number;
+  maxPrice?: number;
 }
 
+/**
+ * Fetches a paginated list of active products with optional filters.
+ * Supports search, category, price range, and sort order.
+ * Returns products alongside pagination metadata.
+ */
 export async function getProducts(filters: GetProductsFilters = {}) {
   const {
     page = 1,
@@ -35,9 +45,11 @@ export async function getProducts(filters: GetProductsFilters = {}) {
     minPrice,
     maxPrice,
   } = filters;
+
   const skip = (page - 1) * pageSize;
 
-  const where: any = {
+  // Build the WHERE clause incrementally so each condition is easy to follow
+  const where: Record<string, unknown> = {
     isActive: true,
   };
 
@@ -50,13 +62,10 @@ export async function getProducts(filters: GetProductsFilters = {}) {
 
   if (colors.length > 0) {
     where.variants = {
-      some: {
-        color: { in: colors },
-      },
+      some: { color: { in: colors } },
     };
   }
 
-  // ── Category filter ──────────────────────────────────────────────────────
   if (categorySlug) {
     where.categories = {
       some: {
@@ -65,17 +74,21 @@ export async function getProducts(filters: GetProductsFilters = {}) {
     };
   }
 
-  // ── Price range filter ───────────────────────────────────────────────────
   if (minPrice !== undefined || maxPrice !== undefined) {
-    where.price = {};
-    if (minPrice !== undefined) where.price.gte = minPrice;
-    if (maxPrice !== undefined) where.price.lte = maxPrice;
+    const priceFilter: Record<string, number> = {};
+    if (minPrice !== undefined) priceFilter.gte = minPrice;
+    if (maxPrice !== undefined) priceFilter.lte = maxPrice;
+    where.price = priceFilter;
   }
 
-  let orderBy: any = { createdAt: "desc" };
-  if (sort === "featured") orderBy = { isFeatured: "desc" };
-  if (sort === "price_asc") orderBy = { price: "asc" };
-  if (sort === "price_desc") orderBy = { price: "desc" };
+  // Map sort option to a Prisma orderBy object
+  const sortOptions: Record<string, Record<string, string>> = {
+    newest: { createdAt: "desc" },
+    featured: { isFeatured: "desc" },
+    price_asc: { price: "asc" },
+    price_desc: { price: "desc" },
+  };
+  const orderBy = sortOptions[sort] ?? sortOptions.newest;
 
   const [products, total] = await Promise.all([
     prisma.product.findMany({
@@ -86,7 +99,11 @@ export async function getProducts(filters: GetProductsFilters = {}) {
       include: {
         images: { orderBy: { sortOrder: "asc" }, take: 1 },
         variants: true,
-        categories: { include: { category: { select: { name: true, slug: true } } } },
+        categories: {
+          include: {
+            category: { select: { name: true, slug: true } },
+          },
+        },
       },
     }),
     prisma.product.count({ where }),
@@ -100,6 +117,10 @@ export async function getProducts(filters: GetProductsFilters = {}) {
   };
 }
 
+/**
+ * Fetches a single active product by its URL slug.
+ * Includes all images, variants, and category data for the product detail page.
+ */
 export async function getProductBySlug(slug: string) {
   return prisma.product.findUnique({
     where: { slug, isActive: true },
@@ -111,6 +132,10 @@ export async function getProductBySlug(slug: string) {
   });
 }
 
+/**
+ * Fetches featured products for the homepage hero section.
+ * @param limit - Maximum number of products to return (default: 10)
+ */
 export async function getFeaturedProducts(limit = 10) {
   return prisma.product.findMany({
     where: { isActive: true, isFeatured: true },
@@ -123,6 +148,11 @@ export async function getFeaturedProducts(limit = 10) {
   });
 }
 
+/**
+ * Fetches a category and its products by category slug.
+ * Used on the /category/[slug] storefront page.
+ * Returns null if the category does not exist.
+ */
 export async function getProductsByCategory(categorySlug: string, limit = 12) {
   const category = await prisma.category.findUnique({
     where: { slug: categorySlug },
