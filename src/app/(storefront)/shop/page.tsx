@@ -14,7 +14,10 @@ export default async function ShopPage({
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
   const page = typeof searchParams.page === "string" ? parseInt(searchParams.page) : 1;
-  const sort = typeof searchParams.sort === "string" ? searchParams.sort : "newest";
+  const allowedSorts = ["featured", "price_asc", "price_desc", "newest"] as const;
+  type SortType = typeof allowedSorts[number];
+  const sortParam = typeof searchParams.sort === "string" ? searchParams.sort : "newest";
+  const sort: SortType = allowedSorts.includes(sortParam as SortType) ? (sortParam as SortType) : "newest";
   const categorySlug = typeof searchParams.category === "string" ? searchParams.category : "";
   const minPrice = typeof searchParams.minPrice === "string" ? parseInt(searchParams.minPrice) : undefined;
   const maxPrice = typeof searchParams.maxPrice === "string" ? parseInt(searchParams.maxPrice) : undefined;
