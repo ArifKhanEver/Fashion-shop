@@ -166,3 +166,19 @@ model SiteSetting {
 
   @@map("site_settings")
 }
+
+model StoreSettings {
+  id               String   @id @default("singleton")
+  storeName        String   @default("DevWonder Fashion")
+  headerLogoUrl    String?
+  phoneNumber      String?
+  whatsappNumber   String?
+  deliveryCharge   Decimal  @default(80) @db.Decimal(10, 2)
+  gaMeasurementId  String?
+  metaPixelId      String?
+  sliderImages     Json?    // Stored as an array of URLs
+  updatedAt        DateTime @updatedAt
+
+  @@map("store_settings_singleton")
+}
+
