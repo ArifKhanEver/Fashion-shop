@@ -5,16 +5,11 @@ import { prisma } from "@/lib/prisma";
 // ─── KPI Summary ──────────────────────────────────────────────────────────────
 
 /**
- * Fetches the four key performance indicators shown on the admin dashboard:
- * - Total Revenue (sum of all non-cancelled orders)
- * - Total Orders (all time)
- * - Pending Orders (awaiting fulfillment)
- * - Low Stock Items (variants with fewer than 10 units remaining)
- *
- * All four queries run in parallel for performance.
+ * Fetches ALL key performance indicators shown on the admin dashboard.
+ * Runs all queries in parallel for maximum performance.
  */
 export async function getDashboardKPIs() {
-  const [totalRevenueResult, totalOrders, pendingOrders, lowStockItems] =
+  const [totalRevenueResult, totalOrders, pendingOrders, lowStockItems, activeProducts, allOrders] =
     await Promise.all([
       prisma.order.aggregate({
         where: { status: { not: "CANCELLED" } },
@@ -22,14 +17,35 @@ export async function getDashboardKPIs() {
       }),
       prisma.order.count(),
       prisma.order.count({ where: { status: "PENDING" } }),
-      prisma.productVariant.count({ where: { stock: { lt: 10 } } }),
+      prisma.productVariant.count({ where: { stock: { lt: 5 } } }),
+      prisma.product.count({ where: { isActive: true } }),
+      // Unique customer count — group by phone
+      prisma.order.findMany({
+        distinct: ["customerPhone"],
+        select: { customerPhone: true },
+      }),
+    ]);
+
+  // Status breakdown for the dashboard donut / stat widget
+  const [processingOrders, shippedOrders, deliveredOrders, cancelledOrders] =
+    await Promise.all([
+      prisma.order.count({ where: { status: "PROCESSING" } }),
+      prisma.order.count({ where: { status: "SHIPPED" } }),
+      prisma.order.count({ where: { status: "DELIVERED" } }),
+      prisma.order.count({ where: { status: "CANCELLED" } }),
     ]);
 
   return {
     totalRevenue: Number(totalRevenueResult._sum.totalAmount ?? 0),
     totalOrders,
     pendingOrders,
+    processingOrders,
+    shippedOrders,
+    deliveredOrders,
+    cancelledOrders,
     lowStockProducts: lowStockItems,
+    activeProducts,
+    totalCustomers: allOrders.length,
   };
 }
 
@@ -37,8 +53,6 @@ export async function getDashboardKPIs() {
 
 /**
  * Fetches the most recent orders for the dashboard activity feed.
- * Only selects the fields needed for the order list — avoids over-fetching.
- * @param limit - Number of orders to return (default: 5)
  */
 export async function getRecentOrders(limit: number = 5) {
   return prisma.order.findMany({
@@ -59,12 +73,8 @@ export async function getRecentOrders(limit: number = 5) {
 // ─── Revenue Chart ────────────────────────────────────────────────────────────
 
 /**
- * Calculates daily revenue totals for the past N days, used to render the
- * line chart on the admin dashboard.
- *
- * Returns an array like: [{ name: "Mon", total: 4200 }, { name: "Tue", total: 1800 }, ...]
- *
- * @param days - How many past days to include (default: 7)
+ * Calculates daily revenue totals for the past N days.
+ * Supports 7, 14, and 30 day ranges.
  */
 export async function getRevenueChartData(days: number = 7) {
   const startDate = new Date();
@@ -81,24 +91,115 @@ export async function getRevenueChartData(days: number = 7) {
     },
   });
 
-  // Initialise a bucket for each of the past N days, starting at 0
+  // Bucket per day
   const dailyTotals: Record<string, number> = {};
   for (let daysAgo = days - 1; daysAgo >= 0; daysAgo--) {
     const date = new Date();
     date.setDate(date.getDate() - daysAgo);
-    const dayLabel = date.toLocaleDateString("en-US", { weekday: "short" }); // e.g. "Mon"
-    dailyTotals[dayLabel] = 0;
+    // For longer ranges, use "MMM D" format; for 7 days use weekday
+    const label =
+      days <= 7
+        ? date.toLocaleDateString("en-US", { weekday: "short" })
+        : date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    dailyTotals[label] = 0;
   }
 
-  // Accumulate order revenue into the correct day bucket
   for (const order of recentOrders) {
-    const dayLabel = order.createdAt.toLocaleDateString("en-US", {
-      weekday: "short",
-    });
-    if (dayLabel in dailyTotals) {
-      dailyTotals[dayLabel] = (dailyTotals[dayLabel] ?? 0) + Number(order?.totalAmount || 0);
+    const label =
+      days <= 7
+        ? order.createdAt.toLocaleDateString("en-US", { weekday: "short" })
+        : order.createdAt.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    if (label in dailyTotals) {
+      dailyTotals[label] = (dailyTotals[label] ?? 0) + Number(order.totalAmount ?? 0);
     }
   }
 
   return Object.entries(dailyTotals).map(([name, total]) => ({ name, total }));
+}
+
+// ─── Top Products ─────────────────────────────────────────────────────────────
+
+/**
+ * Returns the top N products by number of times they appear in order items.
+ * Used in the dashboard top-products widget.
+ */
+export async function getTopProducts(limit: number = 5) {
+  const result = await prisma.orderItem.groupBy({
+    by: ["productId", "productTitle"],
+    _count: { productId: true },
+    _sum: { quantity: true },
+    orderBy: { _count: { productId: "desc" } },
+    take: limit,
+  });
+
+  return result.map((r) => ({
+    productId: r.productId,
+    productTitle: r.productTitle,
+    orderCount: r._count.productId,
+    unitsSold: r._sum.quantity ?? 0,
+  }));
+}
+
+// ─── Order Status Counts ──────────────────────────────────────────────────────
+
+/**
+ * Returns order counts for each status value. Used for the tab badges
+ * in the orders table.
+ */
+export async function getOrderStatusCounts() {
+  const result = await prisma.order.groupBy({
+    by: ["status"],
+    _count: { status: true },
+  });
+
+  const counts: Record<string, number> = {
+    ALL: 0,
+    PENDING: 0,
+    PROCESSING: 0,
+    SHIPPED: 0,
+    DELIVERED: 0,
+    CANCELLED: 0,
+  };
+
+  let total = 0;
+  for (const row of result) {
+    counts[row.status] = row._count.status;
+    total += row._count.status;
+  }
+  counts["ALL"] = total;
+
+  return counts;
+}
+
+// ─── Products with Stock ──────────────────────────────────────────────────────
+
+/**
+ * Returns all products with their total stock across all variants.
+ * Used in the admin products table for the inventory column.
+ */
+export async function getAdminProductsWithStock(page = 1, pageSize = 20) {
+  const [products, total] = await Promise.all([
+    prisma.product.findMany({
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      orderBy: { createdAt: "desc" },
+      include: {
+        images: { take: 1, orderBy: { sortOrder: "asc" } },
+        variants: { select: { id: true, color: true, size: true, stock: true } },
+        categories: { include: { category: { select: { name: true } } } },
+      },
+    }),
+    prisma.product.count(),
+  ]);
+
+  return {
+    products: products.map((p) => ({
+      ...p,
+      totalStock: p.variants.reduce((s, v) => s + v.stock, 0),
+      isLowStock: p.variants.some((v) => v.stock < 5),
+    })),
+    total,
+    totalPages: Math.max(1, Math.ceil(total / pageSize)),
+    currentPage: page,
+  };
 }
