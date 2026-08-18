@@ -3,9 +3,10 @@ import { adminGetProductById } from "@/actions/admin.product.actions";
 import { notFound } from "next/navigation";
 import AdminProductEditClient from "./AdminProductEditClient";
 
-export default async function AdminProductEditPage({ params }: { params: { id: string } }) {
+export default async function AdminProductEditPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const [product, categories] = await Promise.all([
-    adminGetProductById(params.id),
+    adminGetProductById(id),
     adminGetCategories()
   ]);
 
