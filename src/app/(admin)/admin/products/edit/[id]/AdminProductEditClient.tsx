@@ -52,8 +52,8 @@ export default function AdminProductEditClient({ categories, product }: AdminPro
   const [stock, setStock] = useState(initialStock);
 
   const [variants, setVariants] = useState<VariantState[]>(
-    product.variants.map((v: any, i: number) => ({
-      id: `initial-${i}`,
+    product.variants.map((v: any) => ({
+      id: v.id,
       color: v.color || null,
       size: v.size || null,
       stock: v.stock || 0,
