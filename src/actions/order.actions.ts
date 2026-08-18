@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { generateInvoiceNumber, calcDeliveryCharge } from "@/lib/utils";
+import { generateInvoiceNumber } from "@/lib/utils";
 import { z } from "zod";
 import { CartItem } from "@/types";
 
@@ -16,6 +16,7 @@ const CheckoutSchema = z.object({
   division: z.string().min(1, "Division is required"),
   district: z.string().min(1, "District is required"),
   fullAddress: z.string().min(5, "Full address is required"),
+  deliveryArea: z.enum(["inside", "outside"]),
 });
 
 export type CheckoutInput = z.infer<typeof CheckoutSchema>;
@@ -50,7 +51,12 @@ export async function placeOrder(
   }
 
   try {
-    const deliveryCharge = calcDeliveryCharge(formData.division);
+    const { getGlobalStoreSettings } = await import("@/actions/store-settings.actions");
+    const settings = await getGlobalStoreSettings();
+    const deliveryCharge = formData.deliveryArea === "inside" 
+      ? Number(settings.deliveryChargeInside) || 80 
+      : Number(settings.deliveryChargeOutside) || 120;
+
     const subtotal = cartItems.reduce(
       (sum, item) => sum + item.price * item.quantity,
       0
