@@ -52,7 +52,7 @@ export default function CartPage() {
   useEffect(() => {
     // Fetch global dynamic delivery charge from DB
     import("@/actions/store-settings.actions").then((module) => {
-      module.getGlobalStoreSettings().then((settings) => setBaseDeliveryCharge(Number(settings.deliveryCharge) || 80));
+      module.getGlobalStoreSettings().then((settings) => setBaseDeliveryCharge(Number(settings.deliveryChargeInside) || 80));
     });
   }, []);
 
