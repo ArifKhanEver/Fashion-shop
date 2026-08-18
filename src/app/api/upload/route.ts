@@ -29,7 +29,8 @@ export async function POST(request: NextRequest) {
       | "product"
       | "category"
       | "brand"
-      | "slider";
+      | "slider"
+      | "variant";
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
@@ -47,6 +48,8 @@ export async function POST(request: NextRequest) {
       result = await cloudinary.uploader.upload(base64, { folder: CLOUDINARY_FOLDERS.logos, quality: "auto", fetch_format: "auto" });
     } else if (uploadType === "slider") {
       result = await cloudinary.uploader.upload(base64, { folder: CLOUDINARY_FOLDERS.sliders, quality: "auto", fetch_format: "auto" });
+    } else if (uploadType === "variant") {
+      result = await cloudinary.uploader.upload(base64, { folder: CLOUDINARY_FOLDERS.variants, quality: "auto", fetch_format: "auto" });
     } else {
       // Default: product
       result = await uploadProductImage(base64);

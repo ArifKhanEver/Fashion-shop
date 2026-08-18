@@ -15,6 +15,7 @@ export { cloudinary };
 
 export const CLOUDINARY_FOLDERS = {
   products: "devwonder_fashion/products",
+  variants: "devwonder_fashion/products/variants",
   categories: "devwonder_fashion/categories",
   logos: "devwonder_fashion/brand",
   sliders: "devwonder_fashion/sliders",

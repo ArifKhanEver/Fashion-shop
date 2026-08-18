@@ -111,7 +111,7 @@ export default function AdminProductEditClient({ categories, product }: AdminPro
       formData.append("file", file);
       formData.append("folder", "devwonder/products/variants");
 
-      const res = await fetch("/api/upload", {
+      const res = await fetch("/api/upload?type=variant", {
         method: "POST",
         body: formData,
       });
