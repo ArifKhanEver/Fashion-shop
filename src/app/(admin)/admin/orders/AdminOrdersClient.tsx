@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition, Suspense } from "react";
+import AdminTableSkeleton from "@/components/admin/AdminTableSkeleton";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Search, Eye, ChevronDown } from "lucide-react";
@@ -238,7 +239,7 @@ function OrdersContent({
 
 export default function AdminOrdersClient(props: AdminOrdersClientProps) {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-gray-500">Loading...</div>}>
+    <Suspense fallback={<div className="space-y-6"><AdminTableSkeleton rows={8} /></div>}>
       <OrdersContent {...props} />
     </Suspense>
   );
