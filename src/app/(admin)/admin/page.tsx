@@ -31,10 +31,12 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default async function AdminDashboardOverview() {
-  const [kpis, recentOrders, chartData, topProducts] = await Promise.all([
+  const [kpis, recentOrders, chartData, chartData14, chartData30, topProducts] = await Promise.all([
     getDashboardKPIs(),
     getRecentOrders(6),
     getRevenueChartData(7),
+    getRevenueChartData(14),
+    getRevenueChartData(30),
     getTopProducts(5),
   ]);
 
@@ -135,8 +137,8 @@ export default async function AdminDashboardOverview() {
               Last 7 Days
             </span>
           </div>
-          <div className="h-[260px] w-full">
-            <AdminRevenueChart data={chartData} />
+          <div className="h-[280px] w-full">
+            <AdminRevenueChart data={chartData} data14={chartData14} data30={chartData30} />
           </div>
         </div>
 
