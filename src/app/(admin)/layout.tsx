@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import AdminSidebar from "@/components/admin/AdminSidebar";
+import AdminBreadcrumbs from "@/components/admin/AdminBreadcrumbs";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -23,7 +24,10 @@ export default async function AdminLayout({
     <div className="flex h-screen bg-gray-50 overflow-hidden">
       <AdminSidebar />
       <main className="flex-1 overflow-y-auto">
-        <div className="p-6 sm:p-8">{children}</div>
+        <div className="p-6 sm:p-8">
+          <AdminBreadcrumbs />
+          {children}
+        </div>
       </main>
     </div>
   );
