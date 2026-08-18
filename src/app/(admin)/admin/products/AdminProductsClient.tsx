@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Plus, Search, Edit2, Trash2, AlertTriangle, Package } from "lucide-react";
+import { Plus, Search, Edit2, Trash2, AlertTriangle, Package, Star } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
-import { adminDeleteProduct } from "@/actions/admin.product.actions";
+import { adminDeleteProduct, adminToggleProductFeatured } from "@/actions/admin.product.actions";
 import { toast } from "react-hot-toast";
 import AdminPagination from "@/components/admin/AdminPagination";
 import { Suspense } from "react";
@@ -44,10 +44,12 @@ export default function AdminProductsClient({
   totalPages,
   currentPage,
 }: AdminProductsClientProps) {
+  const [products, setProducts] = useState(initialProducts);
   const [searchQuery, setSearchQuery] = useState("");
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [isToggling, setIsToggling] = useState<string | null>(null);
 
-  const filteredProducts = initialProducts.filter(
+  const filteredProducts = products.filter(
     (p) =>
       p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.slug.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -63,6 +65,7 @@ export default function AdminProductsClient({
       setIsDeleting(id);
       try {
         await adminDeleteProduct(id);
+        setProducts(products.filter((p) => p.id !== id));
         toast.success("Product deleted successfully");
       } catch (error: any) {
         toast.error(
@@ -75,6 +78,25 @@ export default function AdminProductsClient({
     }
   };
 
+  const handleToggleFeatured = async (id: string, currentStatus: boolean) => {
+    setIsToggling(id);
+    try {
+      await adminToggleProductFeatured(id, !currentStatus);
+      setProducts(
+        products.map((p) =>
+          p.id === id ? { ...p, isFeatured: !currentStatus } : p
+        )
+      );
+      toast.success(
+        !currentStatus ? "Added to featured products" : "Removed from featured products"
+      );
+    } catch (error: any) {
+      toast.error(error.message || "Failed to update product status");
+    } finally {
+      setIsToggling(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* ── Header ── */}
@@ -83,9 +105,9 @@ export default function AdminProductsClient({
           <h1 className="text-2xl font-bold text-gray-900">Products</h1>
           <p className="text-sm text-gray-500">
             {total} products ·{" "}
-            {initialProducts.filter((p) => p.isLowStock).length > 0 && (
+            {products.filter((p) => p.isLowStock).length > 0 && (
               <span className="text-red-600 font-semibold">
-                ⚠ {initialProducts.filter((p) => p.isLowStock).length} low stock
+                ⚠ {products.filter((p) => p.isLowStock).length} low stock
               </span>
             )}
           </p>
@@ -160,7 +182,7 @@ export default function AdminProductsClient({
                       }`}
                     >
                       <td className="p-4">
-                        <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden border border-gray-200 shrink-0">
+                        <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden border border-gray-200 shrink-0 relative group">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={
@@ -179,11 +201,6 @@ export default function AdminProductsClient({
                           <p className="text-xs text-gray-400 font-mono">
                             {product.id.slice(0, 8).toUpperCase()}
                           </p>
-                          {product.isFeatured && (
-                            <span className="text-xs bg-yellow-50 text-yellow-700 border border-yellow-200 px-1.5 py-0.5 rounded font-semibold">
-                              Featured
-                            </span>
-                          )}
                           {!product.isActive && (
                             <span className="text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">
                               Inactive
@@ -238,6 +255,18 @@ export default function AdminProductsClient({
                       </td>
                       <td className="p-4">
                         <div className="flex items-center justify-end gap-2">
+                          <button
+                            className={`p-2 rounded-lg transition-colors disabled:opacity-50 ${
+                              product.isFeatured 
+                                ? "text-yellow-500 hover:bg-yellow-50" 
+                                : "text-gray-400 hover:text-yellow-500 hover:bg-yellow-50"
+                            }`}
+                            title={product.isFeatured ? "Remove from Featured" : "Mark as Featured"}
+                            disabled={isToggling === product.id}
+                            onClick={() => handleToggleFeatured(product.id, product.isFeatured)}
+                          >
+                            <Star className={`w-4 h-4 ${product.isFeatured ? "fill-current" : ""}`} />
+                          </button>
                           <Link
                             href={`/admin/products/edit/${product.id}`}
                             className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"

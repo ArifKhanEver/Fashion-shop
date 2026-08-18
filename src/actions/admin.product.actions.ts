@@ -260,3 +260,22 @@ export async function adminDeleteProduct(id: string) {
 
   return { success: true };
 }
+
+// ─── Quick Actions ────────────────────────────────────────────────────────────
+
+/**
+ * Toggles a product's featured status on/off.
+ * Revalidates the homepage and shop to show changes immediately.
+ */
+export async function adminToggleProductFeatured(id: string, isFeatured: boolean) {
+  await prisma.product.update({
+    where: { id },
+    data: { isFeatured },
+  });
+
+  revalidatePath("/admin/products");
+  revalidatePath("/shop");
+  revalidatePath("/");
+
+  return { success: true };
+}
