@@ -16,7 +16,8 @@ export const getGlobalStoreSettings = cache(async () => {
       headerLogoUrl: null,
       phoneNumber: null,
       whatsappNumber: null,
-      deliveryCharge: 80,
+      deliveryChargeInside: 80,
+      deliveryChargeOutside: 120,
       gaMeasurementId: null,
       metaPixelId: null,
       sliderImages: null,
@@ -53,7 +54,8 @@ export const getGlobalStoreSettings = cache(async () => {
       headerLogoUrl: null,
       phoneNumber: null,
       whatsappNumber: null,
-      deliveryCharge: 80,
+      deliveryChargeInside: 80,
+      deliveryChargeOutside: 120,
       gaMeasurementId: null,
       metaPixelId: null,
       sliderImages: null,
@@ -67,7 +69,8 @@ export async function updateGlobalStoreSettings(data: {
   headerLogoUrl?: string | null;
   phoneNumber?: string | null;
   whatsappNumber?: string | null;
-  deliveryCharge?: number;
+  deliveryChargeInside?: number;
+  deliveryChargeOutside?: number;
   gaMeasurementId?: string | null;
   metaPixelId?: string | null;
   sliderImages?: string[];
