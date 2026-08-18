@@ -50,6 +50,7 @@ export default function CheckoutPage() {
       division: division,
       district: formData.get("district") as string,
       fullAddress: formData.get("fullAddress") as string,
+      deliveryArea,
     };
 
     setIsSubmitting(true);

@@ -107,6 +107,10 @@ export default function AdminCategoriesClient({
     setIsUploading(true);
     try {
       const file = e.target.files[0];
+      if (!file) {
+        setIsUploading(false);
+        return;
+      }
       if (file.size > 5 * 1024 * 1024) {
         toast({ title: "File too large (max 5MB)", variant: "destructive" });
         setIsUploading(false);
