@@ -14,24 +14,24 @@ export default function CheckoutPage() {
   const router = useRouter();
   const { items, subtotal, clearCart } = useCart();
   const [division, setDivision] = useState("");
+  const [deliveryArea, setDeliveryArea] = useState<"inside" | "outside">("inside");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [baseDeliveryCharge, setBaseDeliveryCharge] = useState(80);
+  const [deliveryCharges, setDeliveryCharges] = useState({ inside: 80, outside: 120 });
   
   useEffect(() => {
-    // Fetch global dynamic delivery charge from DB
     import("@/actions/store-settings.actions").then((module) => {
-      module.getGlobalStoreSettings().then((settings) => setBaseDeliveryCharge(Number(settings.deliveryCharge) || 80));
+      module.getGlobalStoreSettings().then((settings) => {
+        setDeliveryCharges({
+          inside: Number(settings.deliveryChargeInside) || 80,
+          outside: Number(settings.deliveryChargeOutside) || 120,
+        });
+      });
     });
   }, []);
 
-  // Delivery Fee Logic (fallback logic if needed, but we use the global charge now)
-  let deliveryCharge = baseDeliveryCharge;
-  if (division && division !== "Dhaka") {
-    // Optionally add a surcharge for outside Dhaka, or just use the base charge.
-    // Assuming the user just wants the dynamic global delivery charge to apply.
-    deliveryCharge = baseDeliveryCharge + 40; // Outside dhaka surcharge
-  }
+  // Delivery Fee Logic
+  const deliveryCharge = deliveryArea === "inside" ? deliveryCharges.inside : deliveryCharges.outside;
   
   const total = subtotal + deliveryCharge;
 
@@ -141,6 +141,41 @@ export default function CheckoutPage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">District / City *</label>
                   <input name="district" required type="text" placeholder="e.g. Gulshan, Dhaka" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#E91E8C] focus:border-[#E91E8C] bg-gray-50 focus:bg-white transition-all outline-none" />
+                </div>
+                <div className="md:col-span-2 mt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-3">Delivery Area *</label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <label className={`border-2 rounded-xl p-4 flex flex-col cursor-pointer transition-all ${deliveryArea === "inside" ? "border-[#E91E8C] bg-pink-50" : "border-gray-200 hover:border-pink-200"}`}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-bold text-gray-900">Inside Dhaka</span>
+                        <input 
+                          type="radio" 
+                          name="deliveryArea" 
+                          value="inside" 
+                          checked={deliveryArea === "inside"} 
+                          onChange={() => setDeliveryArea("inside")}
+                          className="w-4 h-4 text-[#E91E8C] focus:ring-[#E91E8C]" 
+                        />
+                      </div>
+                      <span className="text-sm text-gray-500">Delivery in 1-2 days</span>
+                      <span className="text-[#E91E8C] font-bold mt-2">Tk {deliveryCharges.inside}</span>
+                    </label>
+                    <label className={`border-2 rounded-xl p-4 flex flex-col cursor-pointer transition-all ${deliveryArea === "outside" ? "border-[#E91E8C] bg-pink-50" : "border-gray-200 hover:border-pink-200"}`}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-bold text-gray-900">Outside Dhaka</span>
+                        <input 
+                          type="radio" 
+                          name="deliveryArea" 
+                          value="outside" 
+                          checked={deliveryArea === "outside"} 
+                          onChange={() => setDeliveryArea("outside")}
+                          className="w-4 h-4 text-[#E91E8C] focus:ring-[#E91E8C]" 
+                        />
+                      </div>
+                      <span className="text-sm text-gray-500">Delivery in 3-5 days</span>
+                      <span className="text-[#E91E8C] font-bold mt-2">Tk {deliveryCharges.outside}</span>
+                    </label>
+                  </div>
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">Full Address *</label>
