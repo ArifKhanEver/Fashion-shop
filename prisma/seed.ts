@@ -28,7 +28,8 @@ async function main() {
       headerLogoUrl: "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=200&q=80",
       phoneNumber: "+880 1700-112233",
       whatsappNumber: "+8801700112233",
-      deliveryCharge: 80,
+      deliveryChargeInside: 80,
+      deliveryChargeOutside: 120,
       gaMeasurementId: "G-DEMO12345",
       metaPixelId: "1234567890",
       sliderImages: [
