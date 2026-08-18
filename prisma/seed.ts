@@ -1,5 +1,5 @@
 import { config } from "dotenv";
-config({ path: ".env.local" });
+config({ path: ".env" });
 import { OrderStatus, PrismaClient } from "@prisma/client";
 import crypto from "crypto";
 
@@ -177,10 +177,10 @@ async function main() {
         },
         variants: {
           create: [
-            { color: "Black", size: "S",  stock: Math.floor(Math.random() * 30) + 5 },
-            { color: "White", size: "M",  stock: Math.floor(Math.random() * 30) + 5 },
-            { color: "Beige", size: "L",  stock: Math.floor(Math.random() * 30) + 5 },
-            { color: "Red",   size: "XL", stock: Math.floor(Math.random() * 20) + 2 },
+            { color: "Black", size: "S",  stock: Math.floor(Math.random() * 30) + 5, imageUrl: imageUrl },
+            { color: "White", size: "M",  stock: Math.floor(Math.random() * 30) + 5, imageUrl: image2Url },
+            { color: "Beige", size: "L",  stock: Math.floor(Math.random() * 30) + 5, imageUrl: imageUrl },
+            { color: "Red",   size: "XL", stock: Math.floor(Math.random() * 20) + 2, imageUrl: image2Url },
           ],
         },
       },

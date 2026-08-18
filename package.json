@@ -65,6 +65,6 @@
     "typescript": "^5"
   },
   "prisma": {
-    "seed": "ts-node --project tsconfig.seed.json prisma/seed.ts"
+    "seed": "npx tsx --env-file=.env prisma/seed.ts"
   }
 }
