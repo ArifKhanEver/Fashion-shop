@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Image as ImageIcon } from "lucide-react";
 
 interface CategorySliderProps {
   categories: {
@@ -52,7 +53,7 @@ export default function CategorySlider({ categories }: CategorySliderProps) {
                     loading="lazy"
                   />
                 ) : (
-                  <span className="text-3xl">👠</span>
+                  <ImageIcon className="w-8 h-8 text-pink-300" />
                 )}
               </div>
               <span className="font-semibold text-gray-800 text-xs group-hover:text-[#E91E8C] transition-colors leading-tight line-clamp-2 w-full">
