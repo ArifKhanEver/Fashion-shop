@@ -42,7 +42,8 @@ export default function ProductSection({
               image: imageUrl,
               price: discountedPrice ?? price,
               originalPrice: discountedPrice ? price : undefined,
-              discountPercent: isLimitedOffer ? 20 : undefined // Just to map isLimitedOffer to something
+              discountPercent: isLimitedOffer ? 20 : undefined,
+              variants: (product as any).variants
             }}
           />
         );

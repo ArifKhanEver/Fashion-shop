@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ChevronRight, Heart, Share2, Minus, Plus, ShoppingCart, ShieldCheck, Truck, RefreshCcw } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
@@ -11,26 +11,52 @@ import { trackAddToCart } from "@/components/analytics/AnalyticsProvider";
 import { useRouter } from "next/navigation";
 
 export default function ProductDetailClient({ product, relatedProducts }: { product: any, relatedProducts: any[] }) {
-  const [activeImage, setActiveImage] = useState(product.images?.[0] || product.image);
-  const [selectedColor, setSelectedColor] = useState(product.colors?.[0] || "");
-  const [selectedSize, setSelectedSize] = useState(product.sizes?.[0] || "");
-  const [quantity, setQuantity] = useState(1);
-
+  const router = useRouter();
   const { addItem } = useCart();
   const { toast } = useToast();
-  const router = useRouter();
+
+  const validVariants = product.variants?.filter((v: any) => v.color || v.size) || [];
+  const colors = Array.from(new Set(validVariants.map((v: any) => v.color).filter(Boolean))) as string[];
+  const sizes = Array.from(new Set(validVariants.map((v: any) => v.size).filter(Boolean))) as string[];
+
+  const [activeImage, setActiveImage] = useState(product.images?.[0]?.url || "/placeholder-product.jpg");
+  const [selectedColor, setSelectedColor] = useState<string | null>(colors[0] || null);
+  const [selectedSize, setSelectedSize] = useState<string | null>(sizes[0] || null);
+  const [quantity, setQuantity] = useState(1);
+
+  // Find exact variant
+  const selectedVariant = validVariants.find(
+    (v: any) => (colors.length === 0 || v.color === selectedColor) && 
+                (sizes.length === 0 || v.size === selectedSize)
+  );
+
+  // Update active image when variant changes
+  useEffect(() => {
+    if (selectedVariant?.imageUrl) {
+      setActiveImage(selectedVariant.imageUrl);
+    }
+  }, [selectedVariant]);
 
   const handleAddToCart = () => {
+    if (colors.length > 0 && !selectedColor) {
+      return toast({ title: "Error", description: "Please select a color.", variant: "destructive" });
+    }
+    if (sizes.length > 0 && !selectedSize) {
+      return toast({ title: "Error", description: "Please select a size.", variant: "destructive" });
+    }
+    if (selectedVariant && selectedVariant.stock < quantity) {
+      return toast({ title: "Insufficient Stock", description: "Not enough stock available for this selection.", variant: "destructive" });
+    }
+
     addItem({
       productId: product.id,
       title: product.title,
-      price: product.price,
+      price: product.price, // or discounted price
       quantity,
       imageUrl: activeImage,
       color: selectedColor || undefined,
       size: selectedSize || undefined,
       slug: product.slug,
-      // variantId could be added here if we had it mapped
     });
 
     trackAddToCart({
@@ -48,9 +74,21 @@ export default function ProductDetailClient({ product, relatedProducts }: { prod
   };
 
   const handleBuyNow = () => {
+    if (colors.length > 0 && !selectedColor) {
+      return toast({ title: "Error", description: "Please select a color.", variant: "destructive" });
+    }
+    if (sizes.length > 0 && !selectedSize) {
+      return toast({ title: "Error", description: "Please select a size.", variant: "destructive" });
+    }
+    if (selectedVariant && selectedVariant.stock < quantity) {
+      return toast({ title: "Insufficient Stock", description: "Not enough stock available for this selection.", variant: "destructive" });
+    }
+
     handleAddToCart();
     router.push("/checkout");
   };
+
+  const effectivePrice = product.discountedPrice || product.price;
 
   return (
     <div className="bg-gray-50 min-h-screen pb-24">
@@ -88,16 +126,16 @@ export default function ProductDetailClient({ product, relatedProducts }: { prod
               {/* Thumbnails */}
               {product.images && product.images.length > 1 && (
                 <div className="flex gap-4 overflow-x-auto pb-2 no-scrollbar">
-                  {product.images.map((img: string, idx: number) => (
+                  {product.images.map((img: any, idx: number) => (
                     <button 
                       key={idx}
-                      onClick={() => setActiveImage(img)}
+                      onClick={() => setActiveImage(img.url)}
                       className={`relative w-20 h-24 shrink-0 rounded-xl overflow-hidden border-2 transition-all ${
-                        activeImage === img ? "border-[#E91E8C]" : "border-transparent opacity-70 hover:opacity-100"
+                        activeImage === img.url ? "border-[#E91E8C]" : "border-transparent opacity-70 hover:opacity-100"
                       }`}
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={img} alt={`Thumbnail ${idx}`} className="w-full h-full object-cover" />
+                      <img src={img.url} alt={`Thumbnail ${idx}`} className="w-full h-full object-cover" />
                     </button>
                   ))}
                 </div>
@@ -109,31 +147,45 @@ export default function ProductDetailClient({ product, relatedProducts }: { prod
               <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 mb-2 leading-tight">
                 {product.title}
               </h1>
-              <p className="text-sm text-gray-500 mb-6">SKU: {product.id.toUpperCase()}-001</p>
+              <p className="text-sm text-gray-500 mb-6">SKU: {product.id.toUpperCase().slice(0, 8)}-001</p>
               
               {/* Pricing */}
-              <div className="flex items-end gap-3 mb-8">
+              <div className="flex items-end gap-3 mb-4">
                 <span className="text-3xl font-black text-[#E91E8C]">
-                  {formatPrice(product.price)}
+                  {formatPrice(effectivePrice)}
                 </span>
-                {product.originalPrice && (
+                {product.discountedPrice && (
                   <span className="text-lg text-gray-400 line-through mb-1">
-                    {formatPrice(product.originalPrice)}
+                    {formatPrice(product.price)}
                   </span>
                 )}
               </div>
 
+              {selectedVariant && (
+                <div className="mb-6">
+                  {selectedVariant.stock > 0 ? (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-green-50 text-green-700 text-sm font-bold border border-green-100">
+                      {selectedVariant.stock} in stock
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-red-50 text-red-700 text-sm font-bold border border-red-100">
+                      Out of stock
+                    </span>
+                  )}
+                </div>
+              )}
+
               <hr className="border-gray-100 mb-8" />
 
               {/* Color Selection */}
-              {product.colors && product.colors.length > 0 && (
+              {colors.length > 0 && (
                 <div className="mb-6">
                   <div className="flex items-center justify-between mb-3">
                     <span className="font-semibold text-gray-900">Color</span>
                     <span className="text-sm text-gray-500">{selectedColor}</span>
                   </div>
                   <div className="flex flex-wrap gap-3">
-                    {product.colors.map((color: string) => (
+                    {colors.map((color: string) => (
                       <button
                         key={color}
                         onClick={() => setSelectedColor(color)}
@@ -151,13 +203,13 @@ export default function ProductDetailClient({ product, relatedProducts }: { prod
               )}
 
               {/* Size Selection */}
-              {product.sizes && product.sizes.length > 0 && (
+              {sizes.length > 0 && (
                 <div className="mb-8">
                   <div className="flex items-center justify-between mb-3">
                     <span className="font-semibold text-gray-900">Size</span>
                   </div>
                   <div className="flex flex-wrap gap-3">
-                    {product.sizes.map((size: string) => (
+                    {sizes.map((size: string) => (
                       <button
                         key={size}
                         onClick={() => setSelectedSize(size)}
@@ -188,6 +240,7 @@ export default function ProductDetailClient({ product, relatedProducts }: { prod
                   <button 
                     onClick={() => setQuantity(q => q + 1)}
                     className="w-10 h-10 flex items-center justify-center text-gray-600 hover:bg-white rounded-lg transition-colors"
+                    disabled={Boolean(selectedVariant && selectedVariant.stock <= quantity)}
                   >
                     <Plus className="h-4 w-4" />
                   </button>
@@ -196,7 +249,8 @@ export default function ProductDetailClient({ product, relatedProducts }: { prod
                 <div className="flex flex-1 gap-3">
                   <button 
                     onClick={handleAddToCart}
-                    className="flex-1 bg-gray-900 text-white font-bold rounded-xl h-14 flex items-center justify-center gap-2 hover:bg-gray-800 transition-colors"
+                    disabled={Boolean(selectedVariant && selectedVariant.stock <= 0)}
+                    className="flex-1 bg-gray-900 text-white font-bold rounded-xl h-14 flex items-center justify-center gap-2 hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <ShoppingCart className="h-5 w-5" />
                     <span className="hidden sm:inline">Add to Cart</span>
@@ -204,7 +258,8 @@ export default function ProductDetailClient({ product, relatedProducts }: { prod
                   </button>
                   <button 
                     onClick={handleBuyNow}
-                    className="flex-1 bg-[#E91E8C] text-white font-bold rounded-xl h-14 flex items-center justify-center hover:bg-[#d8157a] hover:shadow-lg hover:shadow-pink-500/30 transition-all"
+                    disabled={Boolean(selectedVariant && selectedVariant.stock <= 0)}
+                    className="flex-1 bg-[#E91E8C] text-white font-bold rounded-xl h-14 flex items-center justify-center hover:bg-[#d8157a] hover:shadow-lg hover:shadow-pink-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Buy Now
                   </button>
@@ -246,29 +301,41 @@ export default function ProductDetailClient({ product, relatedProducts }: { prod
           <h2 className="text-xl font-bold text-gray-900 mb-6">Product Description</h2>
           <div className="prose prose-pink max-w-none text-gray-600 leading-relaxed">
             <p>{product.description}</p>
-            <ul className="mt-4 space-y-2">
-              <li>Premium quality materials</li>
-              <li>Designed for all-day comfort</li>
-              <li>Exclusive DevWonder Fashion collection</li>
-              <li>Care instructions: Wipe clean with a damp cloth</li>
-            </ul>
           </div>
         </div>
 
         {/* ── Related Products ── */}
-        <div className="mt-16">
-          <div className="flex items-end justify-between mb-8">
-            <h2 className="text-2xl font-extrabold text-gray-900">You May Also Like</h2>
-            <Link href="/shop" className="text-sm font-semibold text-gray-500 hover:text-[#E91E8C] hover:underline">
-              View all
-            </Link>
+        {relatedProducts.length > 0 && (
+          <div className="mt-16">
+            <div className="flex items-end justify-between mb-8">
+              <h2 className="text-2xl font-extrabold text-gray-900">You May Also Like</h2>
+              <Link href="/shop" className="text-sm font-semibold text-gray-500 hover:text-[#E91E8C] hover:underline">
+                View all
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+              {relatedProducts.map(p => {
+                const hasDiscount = Boolean(p.discountedPrice);
+                const effectivePrice = hasDiscount ? Number(p.discountedPrice) : Number(p.price);
+                const originalPrice = hasDiscount ? Number(p.price) : undefined;
+                const discountPercent = hasDiscount ? Math.round(((Number(p.price) - effectivePrice) / Number(p.price)) * 100) : undefined;
+
+                return (
+                  <ProductCard key={`related-${p.id}`} product={{
+                    id: p.id,
+                    slug: p.slug,
+                    title: p.title,
+                    price: effectivePrice,
+                    originalPrice: originalPrice,
+                    image: p.images?.[0]?.url || "/placeholder-product.jpg",
+                    discountPercent: discountPercent,
+                    variants: p.variants
+                  }} />
+                );
+              })}
+            </div>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
-            {relatedProducts.map(p => (
-              <ProductCard key={`related-${p.id}`} product={p} />
-            ))}
-          </div>
-        </div>
+        )}
 
       </div>
     </div>

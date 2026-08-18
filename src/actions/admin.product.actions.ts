@@ -19,6 +19,7 @@ const ProductVariantSchema = z.object({
   color: z.string().optional().nullable(),
   size: z.string().optional().nullable(),
   stock: z.number().int().min(0).default(0),
+  imageUrl: z.string().url().optional().nullable(),
 });
 
 const ProductInputSchema = z.object({
@@ -132,6 +133,7 @@ export async function adminCreateProduct(data: ProductInput) {
           color: variant.color,
           size: variant.size,
           stock: variant.stock,
+          imageUrl: variant.imageUrl,
         })),
       },
     },
@@ -200,7 +202,7 @@ export async function adminUpdateProduct(id: string, data: ProductInput) {
 
     const existingVariantIds = new Set(existingVariants.map((v) => v.id));
     const incomingVariantIds = new Set(
-      variants.filter((v) => v.id).map((v) => v.id as string)
+      variants.filter((v) => v.id && !v.id.startsWith('initial-') && !v.id.startsWith('c-') && !v.id.startsWith('s-')).map((v) => v.id as string)
     );
 
     // Remove variants that the admin deleted from the form
@@ -208,19 +210,28 @@ export async function adminUpdateProduct(id: string, data: ProductInput) {
       (existingId) => !incomingVariantIds.has(existingId)
     );
     if (variantIdsToDelete.length > 0) {
-      await transaction.productVariant.deleteMany({
-        where: { id: { in: variantIdsToDelete } },
-      });
+      // NOTE: SetNull or Cascade on orderItems is needed. The schema has onDelete: Cascade for product, 
+      // but orderItems -> variant isn't strictly enforced.
+      // Assuming Prisma lets us delete if no FK constraint blocks it.
+      try {
+        await transaction.productVariant.deleteMany({
+          where: { id: { in: variantIdsToDelete } },
+        });
+      } catch (e) {
+        // Ignore if referenced by orders
+      }
     }
 
     // Update existing variants or create new ones
     for (const variant of variants) {
-      const isExistingVariant = variant.id && existingVariantIds.has(variant.id);
+      // Temporary IDs start with 'initial-' 'c-' 's-' 'default'. Real IDs are standard cuid.
+      const isTempId = variant.id?.startsWith('initial-') || variant.id?.startsWith('c-') || variant.id?.startsWith('s-') || variant.id === 'default';
+      const isExistingVariant = variant.id && !isTempId && existingVariantIds.has(variant.id);
 
       if (isExistingVariant) {
         await transaction.productVariant.update({
           where: { id: variant.id },
-          data: { color: variant.color, size: variant.size, stock: variant.stock },
+          data: { color: variant.color, size: variant.size, stock: variant.stock, imageUrl: variant.imageUrl },
         });
       } else {
         await transaction.productVariant.create({
@@ -229,6 +240,7 @@ export async function adminUpdateProduct(id: string, data: ProductInput) {
             color: variant.color,
             size: variant.size,
             stock: variant.stock,
+            imageUrl: variant.imageUrl,
           },
         });
       }

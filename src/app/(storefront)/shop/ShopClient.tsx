@@ -61,6 +61,7 @@ function toProductCardProps(product: any) {
     price: effectivePrice,
     originalPrice: hasDiscount ? Number(product.price) : undefined,
     discountPercent: getDiscountPercent(Number(product.price), product.discountedPrice),
+    variants: product.variants,
   };
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Image as ImageIcon, Plus, X, Loader2 } from "lucide-react";
@@ -12,6 +12,15 @@ type CategoryType = { id: string; name: string };
 interface AdminProductNewClientProps {
   categories: CategoryType[];
 }
+
+type VariantState = {
+  id: string; // temp id for key
+  color: string | null;
+  size: string | null;
+  stock: number;
+  imageUrl: string | null;
+  isUploading: boolean;
+};
 
 export default function AdminProductNewClient({ categories }: AdminProductNewClientProps) {
   const router = useRouter();
@@ -33,6 +42,79 @@ export default function AdminProductNewClient({ categories }: AdminProductNewCli
   const [sizes, setSizes] = useState<string[]>([]);
   const [sizeInput, setSizeInput] = useState("");
   const [stock, setStock] = useState("10"); // Global stock for simplicity
+
+  const [variants, setVariants] = useState<VariantState[]>([
+    { id: 'default', color: null, size: null, stock: 10, imageUrl: null, isUploading: false }
+  ]);
+
+  // Rebuild variants when colors or sizes change
+  useEffect(() => {
+    let newVariants: VariantState[] = [];
+    const defaultStock = parseInt(stock) || 10;
+
+    if (colors.length === 0 && sizes.length === 0) {
+      newVariants.push({ id: 'default', color: null, size: null, stock: defaultStock, imageUrl: null, isUploading: false });
+    } else if (colors.length > 0 && sizes.length === 0) {
+      colors.forEach(c => newVariants.push({ id: `c-${c}`, color: c, size: null, stock: defaultStock, imageUrl: null, isUploading: false }));
+    } else if (colors.length === 0 && sizes.length > 0) {
+      sizes.forEach(s => newVariants.push({ id: `s-${s}`, color: null, size: s, stock: defaultStock, imageUrl: null, isUploading: false }));
+    } else {
+      colors.forEach(c => {
+        sizes.forEach(s => {
+          newVariants.push({ id: `c-${c}-s-${s}`, color: c, size: s, stock: defaultStock, imageUrl: null, isUploading: false });
+        });
+      });
+    }
+
+    // Preserve existing overrides
+    newVariants = newVariants.map(nv => {
+      const existing = variants.find(v => v.color === nv.color && v.size === nv.size);
+      if (existing) {
+        return existing;
+      }
+      return nv;
+    });
+
+    setVariants(newVariants);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [colors, sizes]);
+
+  const updateVariantStock = (id: string, newStock: number) => {
+    setVariants(variants.map(v => v.id === id ? { ...v, stock: newStock } : v));
+  };
+
+  const updateVariantImage = async (id: string, file: File) => {
+    if (file.size > 5 * 1024 * 1024) {
+      return toast.error(`File is too large (max 5MB)`);
+    }
+    
+    // Set loading
+    setVariants(variants.map(v => v.id === id ? { ...v, isUploading: true } : v));
+    
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("folder", "devwonder/products/variants");
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) throw new Error(`Upload failed`);
+      const data = await res.json();
+      
+      setVariants(variants.map(v => v.id === id ? { ...v, imageUrl: data.url, isUploading: false } : v));
+      toast.success("Variant image uploaded");
+    } catch (error: any) {
+      setVariants(variants.map(v => v.id === id ? { ...v, isUploading: false } : v));
+      toast.error(error.message || "Failed to upload image");
+    }
+  };
+
+  const removeVariantImage = (id: string) => {
+    setVariants(variants.map(v => v.id === id ? { ...v, imageUrl: null } : v));
+  };
 
   // Images
   const [images, setImages] = useState<{url: string, publicId: string}[]>([]);
@@ -99,28 +181,17 @@ export default function AdminProductNewClient({ categories }: AdminProductNewCli
       return toast.error("Please fill all required fields");
     }
     if (images.length === 0) {
-      return toast.error("Please upload at least one image");
+      return toast.error("Please upload at least one main product image");
     }
 
     setIsSubmitting(true);
     try {
-      // Build variants based on selected colors and sizes
-      // For a real robust system, you'd have a UI to set stock per variant combination.
-      // Here we just create simple variants.
-      const variants = [];
-      if (colors.length === 0 && sizes.length === 0) {
-        variants.push({ color: null, size: null, stock: parseInt(stock) });
-      } else if (colors.length > 0 && sizes.length === 0) {
-        colors.forEach(c => variants.push({ color: c, size: null, stock: parseInt(stock) }));
-      } else if (colors.length === 0 && sizes.length > 0) {
-        sizes.forEach(s => variants.push({ color: null, size: s, stock: parseInt(stock) }));
-      } else {
-        colors.forEach(c => {
-          sizes.forEach(s => {
-            variants.push({ color: c, size: s, stock: parseInt(stock) });
-          });
-        });
-      }
+      const cleanVariants = variants.map(({ color, size, stock, imageUrl }) => ({
+        color,
+        size,
+        stock,
+        imageUrl
+      }));
 
       await adminCreateProduct({
         title,
@@ -132,7 +203,7 @@ export default function AdminProductNewClient({ categories }: AdminProductNewCli
         isActive: true,
         categoryIds: [categoryId],
         images: images.map((img, i) => ({ ...img, sortOrder: i })),
-        variants,
+        variants: cleanVariants,
       });
 
       toast.success("Product created successfully!");
@@ -284,16 +355,73 @@ export default function AdminProductNewClient({ categories }: AdminProductNewCli
               )}
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Default Stock (Per Variant)</label>
-              <input 
-                type="number" 
-                value={stock}
-                onChange={e => setStock(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#E91E8C] outline-none"
-                min="0"
-                required
-              />
+            <div className="border-t border-gray-100 pt-6">
+              <div className="flex items-center justify-between mb-4">
+                <label className="block text-sm font-bold text-gray-900">Manage Variant Details</label>
+                <div className="flex items-center gap-2 text-sm text-gray-500">
+                   Default stock: 
+                   <input 
+                      type="number" 
+                      value={stock} 
+                      onChange={e => { setStock(e.target.value); variants.forEach(v => updateVariantStock(v.id, parseInt(e.target.value) || 0)); }} 
+                      className="w-16 px-2 py-1 border rounded" 
+                   />
+                </div>
+              </div>
+              
+              <div className="space-y-3">
+                {variants.map(variant => (
+                  <div key={variant.id} className="flex items-center gap-4 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                    <div className="flex-1">
+                      <span className="font-bold text-gray-900">
+                        {variant.color || "Default Color"} {variant.color && variant.size && "—"} {variant.size || "Default Size"}
+                      </span>
+                    </div>
+                    
+                    {/* Variant Image */}
+                    <div className="flex items-center gap-2">
+                      {variant.imageUrl ? (
+                        <div className="relative w-10 h-10 rounded border overflow-hidden group">
+                           <img src={variant.imageUrl} alt="Variant" className="w-full h-full object-cover" />
+                           <button 
+                             type="button"
+                             onClick={() => removeVariantImage(variant.id)}
+                             className="absolute inset-0 bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                           >
+                             <X className="w-3 h-3" />
+                           </button>
+                        </div>
+                      ) : (
+                        <label className="w-10 h-10 rounded border border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:bg-gray-100 text-gray-400">
+                           {variant.isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
+                           <input 
+                             type="file" 
+                             accept="image/*" 
+                             className="hidden" 
+                             onChange={(e) => {
+                               const file = e.target.files?.[0];
+                               if (file) updateVariantImage(variant.id, file);
+                               e.target.value = '';
+                             }}
+                           />
+                        </label>
+                      )}
+                    </div>
+                    
+                    {/* Stock */}
+                    <div className="w-24">
+                      <input 
+                        type="number" 
+                        value={variant.stock}
+                        onChange={e => updateVariantStock(variant.id, parseInt(e.target.value) || 0)}
+                        placeholder="Stock" 
+                        className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#E91E8C] outline-none text-sm"
+                        min="0"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -322,7 +450,7 @@ export default function AdminProductNewClient({ categories }: AdminProductNewCli
 
           {/* Media Upload */}
           <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-6">
-            <h2 className="text-lg font-bold text-gray-900">Product Images *</h2>
+            <h2 className="text-lg font-bold text-gray-900">Main Images *</h2>
             <label className={`border-2 border-dashed border-gray-200 rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-gray-50 transition-colors ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}>
               <div className="w-12 h-12 bg-pink-50 text-[#E91E8C] rounded-full flex items-center justify-center mb-4">
                 {isUploading ? <Loader2 className="w-6 h-6 animate-spin" /> : <ImageIcon className="w-6 h-6" />}
@@ -346,7 +474,6 @@ export default function AdminProductNewClient({ categories }: AdminProductNewCli
               <div className="grid grid-cols-3 gap-3 mt-4">
                 {images.map((img) => (
                   <div key={img.publicId} className="relative aspect-square bg-gray-100 rounded-lg border border-gray-200 overflow-hidden group">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={img.url} alt="Product" className="w-full h-full object-cover" />
                     <button 
                       type="button"

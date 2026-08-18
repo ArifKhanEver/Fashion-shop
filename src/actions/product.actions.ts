@@ -11,6 +11,7 @@ export async function getFeaturedProducts(limit = 8) {
     orderBy: { createdAt: "desc" },
     include: {
       images: { orderBy: { sortOrder: "asc" }, take: 1 },
+      variants: { select: { id: true, color: true, size: true, stock: true, imageUrl: true } },
     },
   });
 }
@@ -26,6 +27,7 @@ export async function getProductsByCategory(categorySlug: string, limit = 10) {
     orderBy: { createdAt: "desc" },
     include: {
       images: { orderBy: { sortOrder: "asc" }, take: 1 },
+      variants: { select: { id: true, color: true, size: true, stock: true, imageUrl: true } },
     },
   });
 }
@@ -129,7 +131,7 @@ export async function getShopProducts(filters: ShopFilters = {}) {
       take: pageSize,
       include: {
         images: { orderBy: { sortOrder: "asc" }, take: 1 },
-        variants: { select: { color: true, size: true, stock: true } },
+        variants: { select: { id: true, color: true, size: true, stock: true, imageUrl: true } },
       },
     }),
     prisma.product.count({ where }),
@@ -159,6 +161,7 @@ export async function getRelatedProducts(productId: string, limit = 6) {
     orderBy: { createdAt: "desc" },
     include: {
       images: { orderBy: { sortOrder: "asc" }, take: 1 },
+      variants: { select: { id: true, color: true, size: true, stock: true, imageUrl: true } },
     },
   });
 }
