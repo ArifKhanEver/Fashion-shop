@@ -114,6 +114,7 @@ export default function CategoryClient({ category, products }: CategoryClientPro
                   price: product.discountedPrice ? Number(product.discountedPrice) : Number(product.price),
                   originalPrice: product.discountedPrice ? Number(product.price) : undefined,
                   discountPercent: product.discountedPrice ? Math.round(((Number(product.price) - Number(product.discountedPrice)) / Number(product.price)) * 100) : undefined,
+                  variants: product.variants,
                 }} 
               />
             ))}
