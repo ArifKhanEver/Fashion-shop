@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Sparkles, ShoppingBag, Zap, Star, TrendingUp, Gift, Clock } from "lucide-react";
+import { ArrowRight, Sparkles, ShoppingBag, Zap, Star, TrendingUp, Gift, Clock, Truck, ShieldCheck, RefreshCw, CreditCard } from "lucide-react";
 import ProductCard from "@/components/product/ProductCard";
 import HeroCarousel from "@/components/home/HeroCarousel";
 import CategorySlider from "@/components/home/CategorySlider";
@@ -30,29 +30,6 @@ export default async function HomePage() {
       {/* ── Hero Carousel ── */}
       <section className="w-full">
         <HeroCarousel sliderImages={settings.sliderImages as string[] | undefined} />
-      </section>
-
-      {/* ── Trust Bar ── */}
-      <section className="bg-[#E91E8C] text-white py-3">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-10 text-xs sm:text-sm font-semibold tracking-wide">
-            <span className="flex items-center gap-2">
-              <Zap className="h-4 w-4" /> Cash on Delivery Available
-            </span>
-            <span className="hidden sm:block text-pink-200">|</span>
-            <span className="flex items-center gap-2">
-              <Star className="h-4 w-4" /> Premium Quality Guaranteed
-            </span>
-            <span className="hidden sm:block text-pink-200">|</span>
-            <span className="flex items-center gap-2">
-              <ShoppingBag className="h-4 w-4" /> Fast Delivery Across Bangladesh
-            </span>
-            <span className="hidden sm:block text-pink-200">|</span>
-            <span className="flex items-center gap-2">
-              <Gift className="h-4 w-4" /> Free Gift Wrapping on Orders ৳3,000+
-            </span>
-          </div>
-        </div>
       </section>
 
       {/* ── Category Horizontal Slider ── */}
@@ -232,14 +209,16 @@ export default async function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {[
-              { emoji: "🚚", title: "Fast Delivery", desc: "Dhaka: 1-2 days | Outside: 3-5 days" },
-              { emoji: "💳", title: "Cash on Delivery", desc: "Pay when you receive your order" },
-              { emoji: "🔄", title: "Easy Returns", desc: "3-day hassle-free return policy" },
-              { emoji: "🏆", title: "Premium Quality", desc: "Every item is quality-checked" },
-            ].map((feature) => (
-              <div key={feature.title} className="text-center p-6 rounded-2xl bg-gray-50 hover:bg-pink-50 hover:shadow-md transition-all group">
-                <div className="text-4xl mb-3">{feature.emoji}</div>
-                <h3 className="font-bold text-gray-900 mb-1 group-hover:text-[#E91E8C] transition-colors">{feature.title}</h3>
+              { icon: Truck, title: "Fast Delivery", desc: "Dhaka: 1-2 days | Outside: 3-5 days", color: "text-blue-500", bg: "bg-blue-50" },
+              { icon: Zap, title: "Cash on Delivery", desc: "Pay when you receive your order", color: "text-amber-500", bg: "bg-amber-50" },
+              { icon: ArrowRight, title: "Easy Returns", desc: "3-day hassle-free return policy", color: "text-emerald-500", bg: "bg-emerald-50" },
+              { icon: Star, title: "Premium Quality", desc: "Every item is quality-checked", color: "text-purple-500", bg: "bg-purple-50" },
+            ].map((feature, idx) => (
+              <div key={idx} className="text-center p-6 rounded-2xl bg-white border border-gray-100 hover:border-pink-200 hover:shadow-lg transition-all group duration-300">
+                <div className={`w-14 h-14 mx-auto mb-4 rounded-full flex items-center justify-center ${feature.bg} group-hover:scale-110 transition-transform duration-300`}>
+                  <feature.icon className={`w-6 h-6 ${feature.color}`} />
+                </div>
+                <h3 className="font-bold text-gray-900 mb-1.5 group-hover:text-[#E91E8C] transition-colors">{feature.title}</h3>
                 <p className="text-gray-500 text-xs sm:text-sm">{feature.desc}</p>
               </div>
             ))}

@@ -11,6 +11,9 @@ import {
   Truck,
   Menu,
   X,
+  Zap,
+  Star,
+  Gift,
 } from "lucide-react";
 import { useCart } from "@/components/cart/CartContext";
 import { Button } from "@/components/ui/button";
@@ -52,6 +55,29 @@ export default function Header({
 
   return (
     <header className="sticky top-0 z-50 bg-white shadow-sm">
+      {/* ── Top Trust Banner ──────────────────────────────── */}
+      <div className="bg-[#E91E8C] text-white py-2 hidden sm:block">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-10 text-[11px] sm:text-xs font-semibold tracking-wide">
+            <span className="flex items-center gap-1.5">
+              <Zap className="h-3.5 w-3.5" /> Cash on Delivery Available
+            </span>
+            <span className="text-pink-200/50">|</span>
+            <span className="flex items-center gap-1.5">
+              <Star className="h-3.5 w-3.5" /> Premium Quality Guaranteed
+            </span>
+            <span className="text-pink-200/50">|</span>
+            <span className="flex items-center gap-1.5">
+              <Truck className="h-3.5 w-3.5" /> Fast Delivery Across Bangladesh
+            </span>
+            <span className="text-pink-200/50">|</span>
+            <span className="flex items-center gap-1.5">
+              <Gift className="h-3.5 w-3.5" /> Free Gift Wrapping on Orders ৳3,000+
+            </span>
+          </div>
+        </div>
+      </div>
+
       {/* ── Top Bar ───────────────────────────────────────── */}
       <div className="border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

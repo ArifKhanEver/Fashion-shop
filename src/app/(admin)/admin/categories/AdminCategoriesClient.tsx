@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { slugify } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, X, Check, Image as ImageIcon, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Check, Image as ImageIcon, Loader2, FolderOpen } from "lucide-react";
 
 interface Category {
   id: string;
@@ -166,12 +166,12 @@ export default function AdminCategoriesClient({
             {categories.map((cat) => (
               <tr key={cat.id} className="hover:bg-gray-50/50">
                 <td className="py-3.5 px-4">
-                  {cat.image ? (
+                  {cat.image && (cat.image.startsWith("http") || cat.image.startsWith("/")) ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={cat.image} alt={cat.name} className="w-8 h-8 rounded-full object-cover border border-gray-100" />
                   ) : (
-                    <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
-                      <ImageIcon className="w-4 h-4" />
+                    <div className="w-8 h-8 rounded-full bg-pink-50 flex items-center justify-center text-[#E91E8C]">
+                      <FolderOpen className="w-4 h-4" />
                     </div>
                   )}
                 </td>

@@ -7,6 +7,7 @@ import { formatPrice } from "@/lib/utils";
 import { MapPin, User, ShieldCheck, CreditCard } from "lucide-react";
 import { useCart } from "@/components/cart/CartContext";
 import { placeOrder } from "@/actions/order.actions";
+import { validateCoupon } from "@/actions/admin.coupon.actions";
 import { toast } from "react-hot-toast";
 import { BD_DIVISIONS } from "@/types";
 
@@ -16,6 +17,11 @@ export default function CheckoutPage() {
   const [division, setDivision] = useState("");
   const [deliveryArea, setDeliveryArea] = useState<"inside" | "outside">("inside");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Coupon State
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number } | null>(null);
+  const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
 
   const [deliveryCharges, setDeliveryCharges] = useState({ inside: 80, outside: 120 });
   
@@ -33,7 +39,34 @@ export default function CheckoutPage() {
   // Delivery Fee Logic
   const deliveryCharge = deliveryArea === "inside" ? deliveryCharges.inside : deliveryCharges.outside;
   
-  const total = subtotal + deliveryCharge;
+  // Calculate Discount
+  const discountAmount = appliedCoupon ? appliedCoupon.discount : 0;
+  
+  const total = Math.max(0, subtotal - discountAmount + deliveryCharge);
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) return;
+    setIsValidatingCoupon(true);
+    try {
+      const res = await validateCoupon(couponCode.trim(), subtotal);
+      if (res.valid) {
+        setAppliedCoupon({ code: couponCode.trim(), discount: res.discount });
+        toast.success(`Coupon applied! You saved ৳${res.discount}`);
+      } else {
+        setAppliedCoupon(null);
+        toast.error(res.message || "Invalid coupon");
+      }
+    } catch (e) {
+      toast.error("Failed to validate coupon");
+    } finally {
+      setIsValidatingCoupon(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode("");
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -46,11 +79,15 @@ export default function CheckoutPage() {
     const data = {
       customerName: formData.get("customerName") as string,
       customerPhone: formData.get("customerPhone") as string,
-      customerEmail: formData.get("customerEmail") as string,
+      customerEmail: (formData.get("customerEmail") as string) || "",
       division: division,
       district: formData.get("district") as string,
       fullAddress: formData.get("fullAddress") as string,
       deliveryArea,
+      ...(appliedCoupon && {
+        couponCode: appliedCoupon.code,
+        discountAmount: appliedCoupon.discount,
+      }),
     };
 
     setIsSubmitting(true);
@@ -230,11 +267,48 @@ export default function CheckoutPage() {
                   <span>Subtotal</span>
                   <span className="font-semibold text-gray-900">{formatPrice(subtotal)}</span>
                 </div>
+                {appliedCoupon && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Discount ({appliedCoupon.code})</span>
+                    <span className="font-semibold">-{formatPrice(appliedCoupon.discount)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span>Delivery Charge</span>
                   <span className="font-semibold text-gray-900">
                     {deliveryCharge > 0 ? formatPrice(deliveryCharge) : <span className="text-gray-400">Calculated at next step</span>}
                   </span>
+                </div>
+              </div>
+
+              <div className="border-t border-gray-100 pt-6 mb-6">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Coupon code"
+                    value={couponCode}
+                    onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                    disabled={!!appliedCoupon}
+                    className="flex-1 px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#E91E8C] outline-none text-sm disabled:bg-gray-100"
+                  />
+                  {appliedCoupon ? (
+                    <button
+                      type="button"
+                      onClick={handleRemoveCoupon}
+                      className="px-4 py-2 bg-red-50 text-red-600 font-semibold rounded-xl text-sm hover:bg-red-100 transition-colors"
+                    >
+                      Remove
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleApplyCoupon}
+                      disabled={!couponCode.trim() || isValidatingCoupon}
+                      className="px-4 py-2 bg-gray-900 text-white font-semibold rounded-xl text-sm hover:bg-gray-800 transition-colors disabled:opacity-50"
+                    >
+                      {isValidatingCoupon ? "..." : "Apply"}
+                    </button>
+                  )}
                 </div>
               </div>
 

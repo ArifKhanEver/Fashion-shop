@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Plus, Search, Edit2, Trash2, AlertTriangle, Package, Star } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
@@ -46,6 +46,10 @@ export default function AdminProductsClient({
 }: AdminProductsClientProps) {
   const [products, setProducts] = useState(initialProducts);
   const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    setProducts(initialProducts);
+  }, [initialProducts]);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [isToggling, setIsToggling] = useState<string | null>(null);
 

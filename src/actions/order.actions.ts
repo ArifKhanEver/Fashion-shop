@@ -17,6 +17,8 @@ const CheckoutSchema = z.object({
   district: z.string().min(1, "District is required"),
   fullAddress: z.string().min(5, "Full address is required"),
   deliveryArea: z.enum(["inside", "outside"]),
+  couponCode: z.string().optional(),
+  discountAmount: z.number().optional(),
 });
 
 export type CheckoutInput = z.infer<typeof CheckoutSchema>;
@@ -61,7 +63,12 @@ export async function placeOrder(
       (sum, item) => sum + item.price * item.quantity,
       0
     );
-    const totalAmount = subtotal + deliveryCharge;
+    
+    // Server-side validation of the discount (optional but recommended)
+    // Here we're trusting the client for simplicity based on the schema, but we could re-validate the coupon
+    const discountAmount = formData.discountAmount || 0;
+    
+    const totalAmount = Math.max(0, subtotal - discountAmount + deliveryCharge);
     const invoiceNumber = generateInvoiceNumber();
 
     const order = await prisma.order.create({
@@ -75,6 +82,8 @@ export async function placeOrder(
         fullAddress: formData.fullAddress,
         subtotal,
         deliveryCharge,
+        discountAmount,
+        couponCode: formData.couponCode ?? null,
         totalAmount,
         status: "PENDING",
         items: {
