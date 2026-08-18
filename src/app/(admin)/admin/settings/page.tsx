@@ -28,7 +28,8 @@ export default async function AdminSettingsPage({
       headerLogoUrl: (formData.get("headerLogoUrl") as string) || null,
       phoneNumber: (formData.get("phoneNumber") as string) || null,
       whatsappNumber: (formData.get("whatsappNumber") as string) || null,
-      deliveryCharge: Number(formData.get("deliveryCharge")) || 80,
+      deliveryChargeInside: Number(formData.get("deliveryChargeInside")) || 80,
+      deliveryChargeOutside: Number(formData.get("deliveryChargeOutside")) || 120,
       gaMeasurementId: (formData.get("gaMeasurementId") as string) || null,
       metaPixelId: (formData.get("metaPixelId") as string) || null,
       sliderImages,
@@ -157,16 +158,25 @@ export default async function AdminSettingsPage({
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Delivery Charge (Tk)</label>
+                <label className="text-sm font-medium text-gray-700">Delivery Charge (Inside Dhaka) Tk</label>
                 <input
-                  name="deliveryCharge"
+                  name="deliveryChargeInside"
                   type="number"
-                  defaultValue={Number(settings.deliveryCharge)}
+                  defaultValue={Number(settings.deliveryChargeInside || 80)}
                   required
                   className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E91E8C]"
                 />
               </div>
-              <div className="hidden md:block" />
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Delivery Charge (Outside Dhaka) Tk</label>
+                <input
+                  name="deliveryChargeOutside"
+                  type="number"
+                  defaultValue={Number(settings.deliveryChargeOutside || 120)}
+                  required
+                  className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E91E8C]"
+                />
+              </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Google Analytics (GA4) ID</label>
                 <input
