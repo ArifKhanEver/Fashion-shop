@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Phone, Mail, MapPin } from "lucide-react";
+import Image from "next/image";
 
 const QUICK_LINKS = [
   { label: "Luxury Edit Heels", href: "/category/luxury-edit-heels" },
@@ -35,8 +36,7 @@ export default function Footer({
           <div className="lg:col-span-1">
             <Link href="/" className="flex items-center gap-2 mb-4">
               {logoUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={logoUrl} alt={storeName} className="h-10 w-auto rounded object-contain" />
+                <Image src={logoUrl} alt={storeName} width={160} height={40} className="h-10 w-auto rounded object-contain" />
               ) : (
                 <>
                   <div className="w-8 h-8 rounded-full bg-[#E91E8C] flex items-center justify-center">

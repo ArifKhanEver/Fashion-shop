@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Minus, Plus, Trash2, ArrowRight, ShoppingBag } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import { useCart } from "@/components/cart/CartContext";
@@ -180,12 +181,13 @@ function CartLineItem({ item, onUpdateQuantity, onRemove }: CartLineItemProps) {
     <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 border-b border-gray-100 pb-6 md:pb-8 last:border-0 last:pb-0">
 
       {/* Product Image */}
-      <div className="w-24 h-32 sm:w-32 sm:h-40 shrink-0 bg-gray-50 rounded-xl overflow-hidden border border-gray-100">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+      <div className="relative w-24 h-32 sm:w-32 sm:h-40 shrink-0 bg-gray-50 rounded-xl overflow-hidden border border-gray-100">
+        <Image
           src={item.imageUrl}
           alt={item.title}
-          className="w-full h-full object-cover"
+          fill
+          sizes="(max-width: 640px) 96px, 128px"
+          className="object-cover"
         />
       </div>
 

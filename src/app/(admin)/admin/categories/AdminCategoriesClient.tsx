@@ -12,6 +12,7 @@ import { slugify } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { toast } from "@/hooks/use-toast";
 import { Plus, Pencil, Trash2, X, Check, Image as ImageIcon, Loader2, FolderOpen } from "lucide-react";
+import Image from "next/image";
 
 interface Category {
   id: string;
@@ -167,8 +168,7 @@ export default function AdminCategoriesClient({
               <tr key={cat.id} className="hover:bg-gray-50/50">
                 <td className="py-3.5 px-4">
                   {cat.image && (cat.image.startsWith("http") || cat.image.startsWith("/")) ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={cat.image} alt={cat.name} className="w-8 h-8 rounded-full object-cover border border-gray-100" />
+                    <Image src={cat.image} alt={cat.name} width={32} height={32} className="rounded-full object-cover border border-gray-100" />
                   ) : (
                     <div className="w-8 h-8 rounded-full bg-pink-50 flex items-center justify-center text-[#E91E8C]">
                       <FolderOpen className="w-4 h-4" />
@@ -294,8 +294,7 @@ export default function AdminCategoriesClient({
                 <div className="flex items-center gap-4">
                   <div className="shrink-0">
                     {form.image ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={form.image} alt="Preview" className="w-16 h-16 rounded-xl object-cover border border-gray-200" />
+                      <Image src={form.image} alt="Preview" width={64} height={64} className="rounded-xl object-cover border border-gray-200" />
                     ) : (
                       <div className="w-16 h-16 rounded-xl bg-gray-50 flex items-center justify-center border border-gray-200 border-dashed text-gray-400">
                         <ImageIcon className="w-6 h-6" />

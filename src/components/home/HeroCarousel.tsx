@@ -5,6 +5,7 @@ import Autoplay from "embla-carousel-autoplay";
 import { useCallback, useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 const SLIDES = [
   {
@@ -70,12 +71,12 @@ export default function HeroCarousel({ sliderImages }: { sliderImages?: string[]
           {dynamicSlides.map((slide, index) => (
             <div key={slide.id} className="relative flex-[0_0_100%] h-full">
               {/* Background Image */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <Image
                 src={slide.image}
                 alt={slide.title}
-                className="absolute inset-0 w-full h-full object-cover object-center"
-                loading={index === 0 ? "eager" : "lazy"}
+                fill
+                priority={index === 0}
+                className="object-cover object-center"
               />
               
               {/* Gradient Overlay for Text Readability */}

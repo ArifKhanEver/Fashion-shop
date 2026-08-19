@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useCart } from "@/components/cart/CartContext";
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
 
 const CATEGORIES = [
   { name: "CLEARANCE SALE!!!", slug: "clearance-sale" },
@@ -86,8 +87,7 @@ export default function Header({
             <Link href="/" className="flex items-center gap-2 shrink-0">
               <div className="flex items-center gap-2">
                 {logoUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={logoUrl} alt={storeName} className="h-10 w-auto rounded object-contain" />
+                  <Image src={logoUrl} alt={storeName} width={160} height={40} className="h-10 w-auto rounded object-contain" />
                 ) : (
                   <>
                     <div className="w-8 h-8 rounded-full bg-[#E91E8C] flex items-center justify-center">

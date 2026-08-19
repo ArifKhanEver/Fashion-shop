@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { formatPrice } from "@/lib/utils";
 import { ShoppingCart, X, Check } from "lucide-react";
+import Image from "next/image";
 import { useCart } from "@/components/cart/CartContext";
 import { useToast } from "@/hooks/use-toast";
 import { trackAddToCart } from "@/components/analytics/AnalyticsProvider";
@@ -128,12 +129,12 @@ export default function ProductCard({ product }: ProductCardProps) {
             </div>
           )}
           
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src={product.image}
             alt={product.title}
-            className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
-            loading="lazy"
+            fill
+            sizes="(max-width: 768px) 50vw, 25vw"
+            className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
           />
 
           {/* Quick Add overlay (Desktop) */}
@@ -187,8 +188,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             <div className="p-6">
               <div className="flex gap-4 mb-6">
                 <div className="w-24 h-24 shrink-0 rounded-xl overflow-hidden border border-gray-100">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={displayImage} alt={product.title} className="w-full h-full object-cover" />
+                  <Image src={displayImage} alt={product.title} fill sizes="96px" className="object-cover" />
                 </div>
                 <div>
                   <h3 className="font-bold text-gray-900 leading-tight mb-1">{product.title}</h3>

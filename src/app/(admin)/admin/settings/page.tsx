@@ -4,6 +4,7 @@ import { getGlobalStoreSettings, updateGlobalStoreSettings } from "@/actions/sto
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { Save, Settings, Image as ImageIcon, MessageCircle, Truck } from "lucide-react";
+import Image from "next/image";
 
 export default async function AdminSettingsPage({
   searchParams,
@@ -71,8 +72,9 @@ export default async function AdminSettingsPage({
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Store Name</label>
+                <label htmlFor="storeName" className="text-sm font-medium text-gray-700">Store Name</label>
                 <input
+                  id="storeName"
                   name="storeName"
                   type="text"
                   defaultValue={settings.storeName}
@@ -81,8 +83,9 @@ export default async function AdminSettingsPage({
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Header Logo URL</label>
+                <label htmlFor="headerLogoUrl" className="text-sm font-medium text-gray-700">Header Logo URL</label>
                 <input
+                  id="headerLogoUrl"
                   name="headerLogoUrl"
                   type="url"
                   defaultValue={settings.headerLogoUrl || ""}
@@ -92,11 +95,12 @@ export default async function AdminSettingsPage({
               </div>
               {settings.headerLogoUrl && (
                 <div className="md:col-span-2">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                  <Image
                     src={settings.headerLogoUrl}
                     alt="Current Logo Preview"
-                    className="h-12 object-contain border border-gray-200 rounded-lg p-2 bg-gray-50"
+                    width={200}
+                    height={48}
+                    className="object-contain border border-gray-200 rounded-lg p-2 bg-gray-50"
                   />
                   <p className="text-xs text-gray-400 mt-1">Current logo preview</p>
                 </div>

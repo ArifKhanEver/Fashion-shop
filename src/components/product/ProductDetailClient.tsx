@@ -9,6 +9,7 @@ import { useCart } from "@/components/cart/CartContext";
 import { useToast } from "@/hooks/use-toast";
 import { trackAddToCart } from "@/components/analytics/AnalyticsProvider";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 export default function ProductDetailClient({ product, relatedProducts }: { product: any, relatedProducts: any[] }) {
   const router = useRouter();
@@ -115,11 +116,12 @@ export default function ProductDetailClient({ product, relatedProducts }: { prod
                     -{product.discountPercent}%
                   </div>
                 )}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img 
+                <Image 
                   src={activeImage} 
                   alt={product.title} 
-                  className="w-full h-full object-cover object-center transition-opacity duration-300"
+                  fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  className="object-cover object-center transition-opacity duration-300"
                 />
               </div>
               
@@ -134,8 +136,7 @@ export default function ProductDetailClient({ product, relatedProducts }: { prod
                         activeImage === img.url ? "border-[#E91E8C]" : "border-transparent opacity-70 hover:opacity-100"
                       }`}
                     >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={img.url} alt={`Thumbnail ${idx}`} className="w-full h-full object-cover" />
+                      <Image src={img.url} alt={`Thumbnail ${idx}`} fill sizes="80px" className="object-cover" />
                     </button>
                   ))}
                 </div>

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Image as ImageIcon, Plus, X, Loader2 } from "lucide-react";
+import Image from "next/image";
 import { toast } from "react-hot-toast";
 import { adminCreateProduct } from "@/actions/admin.product.actions";
 
@@ -382,7 +383,7 @@ export default function AdminProductNewClient({ categories }: AdminProductNewCli
                     <div className="flex items-center gap-2">
                       {variant.imageUrl ? (
                         <div className="relative w-10 h-10 rounded border overflow-hidden group">
-                           <img src={variant.imageUrl} alt="Variant" className="w-full h-full object-cover" />
+                           <Image fill src={variant.imageUrl} alt="Variant" className="object-cover" sizes="40px" />
                            <button 
                              type="button"
                              onClick={() => removeVariantImage(variant.id)}
@@ -474,7 +475,7 @@ export default function AdminProductNewClient({ categories }: AdminProductNewCli
               <div className="grid grid-cols-3 gap-3 mt-4">
                 {images.map((img) => (
                   <div key={img.publicId} className="relative aspect-square bg-gray-100 rounded-lg border border-gray-200 overflow-hidden group">
-                    <img src={img.url} alt="Product" className="w-full h-full object-cover" />
+                    <Image fill src={img.url} alt="Product" className="object-cover" sizes="(max-width: 768px) 33vw, 20vw" />
                     <button 
                       type="button"
                       onClick={() => removeImage(img.publicId)}

@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { ChevronRight, SlidersHorizontal, ChevronDown, Gem } from "lucide-react";
 import ProductCard from "@/components/product/ProductCard";
+import Image from "next/image";
 
 interface CategoryClientProps {
   category: any;
@@ -31,8 +32,7 @@ export default function CategoryClient({ category, products }: CategoryClientPro
       <div className="bg-gradient-to-r from-pink-100 to-rose-50 py-12 border-b border-pink-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center text-center">
           {category.image ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={category.image} alt={category.name} className="w-20 h-20 rounded-full object-cover mb-4 border border-pink-200 shadow-sm" />
+            <Image src={category.image} alt={category.name} width={80} height={80} className="rounded-full object-cover mb-4 border border-pink-200 shadow-sm" />
           ) : (
             <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center mb-4 border border-pink-200 shadow-sm">
               <Gem className="w-10 h-10 text-pink-300" />

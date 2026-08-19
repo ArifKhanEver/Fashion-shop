@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { formatPrice } from "@/lib/utils";
 import { MapPin, User, ShieldCheck, CreditCard } from "lucide-react";
+import Image from "next/image";
 import { useCart } from "@/components/cart/CartContext";
 import { placeOrder } from "@/actions/order.actions";
 import { validateCoupon } from "@/actions/admin.coupon.actions";
@@ -247,9 +248,8 @@ export default function CheckoutPage() {
               <div className="flex flex-col gap-4 mb-6">
                 {items.map((item, idx) => (
                   <div key={`${item.productId}-${item.variantId}-${idx}`} className="flex gap-4">
-                    <div className="w-16 h-16 shrink-0 bg-gray-50 rounded-lg overflow-hidden border border-gray-100">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" />
+                    <div className="relative w-16 h-16 shrink-0 bg-gray-50 rounded-lg overflow-hidden border border-gray-100">
+                      <Image src={item.imageUrl} alt={item.title} fill sizes="64px" className="object-cover" />
                     </div>
                     <div className="flex-1 flex flex-col justify-center">
                       <p className="text-sm font-semibold text-gray-900 line-clamp-1">{item.title}</p>

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CheckCircle2, ChevronRight, Package, Home, Phone } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
+import Image from "next/image";
 import { getOrderById } from "@/actions/order.actions";
 
 export default async function OrderConfirmationPage({ params }: { params: Promise<{ id: string }> }) {
@@ -82,9 +83,8 @@ export default async function OrderConfirmationPage({ params }: { params: Promis
               <div className="flex flex-col gap-4 mb-6 max-h-60 overflow-y-auto pr-2 no-scrollbar">
                 {order.items.map((item: any) => (
                   <div key={item.id} className="flex gap-4">
-                    <div className="w-16 h-16 shrink-0 bg-gray-50 rounded-lg overflow-hidden border border-gray-100">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={item.productImageUrl || "/placeholder-product.jpg"} alt={item.productTitle} className="w-full h-full object-cover" />
+                    <div className="relative w-16 h-16 shrink-0 bg-gray-50 rounded-lg overflow-hidden border border-gray-100">
+                      <Image src={item.productImageUrl || "/placeholder-product.jpg"} alt={item.productTitle} fill sizes="64px" className="object-cover" />
                     </div>
                     <div className="flex-1 flex flex-col justify-center">
                       <p className="text-sm font-semibold text-gray-900 line-clamp-1">{item.productTitle}</p>

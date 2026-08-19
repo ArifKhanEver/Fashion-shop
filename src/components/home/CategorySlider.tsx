@@ -3,6 +3,7 @@
 import Link from "next/link";
 import useEmblaCarousel from "embla-carousel-react";
 import { Image as ImageIcon, ChevronLeft, ChevronRight } from "lucide-react";
+import Image from "next/image";
 import { useCallback, useState, useEffect } from "react";
 
 interface CategorySliderProps {
@@ -73,12 +74,12 @@ export default function CategorySlider({ categories }: CategorySliderProps) {
                   >
                     <div className="w-20 h-20 rounded-full bg-pink-50 flex items-center justify-center overflow-hidden border-2 border-pink-100 group-hover:border-[#E91E8C] group-hover:scale-110 group-hover:shadow-xl group-hover:shadow-pink-200/60 transition-all duration-300 shrink-0">
                       {cat.image ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
+                        <Image
                           src={cat.image}
                           alt={cat.name}
-                          className="w-full h-full object-cover"
-                          loading="lazy"
+                          fill
+                          sizes="80px"
+                          className="object-cover"
                         />
                       ) : (
                         <ImageIcon className="w-8 h-8 text-pink-300" />

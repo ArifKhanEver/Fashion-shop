@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Package, User, MapPin, Phone, Mail, Calendar, CheckCircle2, Truck, RefreshCcw } from "lucide-react";
+import Image from "next/image";
 import { formatPrice } from "@/lib/utils";
 import { getOrderById, adminUpdateOrderStatus } from "@/actions/order.actions";
 import { revalidatePath } from "next/cache";
@@ -86,8 +87,7 @@ export default async function AdminOrderDetailsPage({ params }: { params: Promis
               {order.items.map((item: any) => (
                 <div key={item.id} className="p-5 md:p-6 flex flex-col sm:flex-row gap-4 sm:items-center">
                   <div className="w-16 h-20 bg-gray-50 rounded-lg overflow-hidden border border-gray-100 shrink-0">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={item.productImageUrl || "/placeholder-product.jpg"} alt={item.productTitle} className="w-full h-full object-cover" />
+                    <Image src={item.productImageUrl || "/placeholder-product.jpg"} alt={item.productTitle} fill sizes="64px" className="object-cover" />
                   </div>
                   <div className="flex-1">
                     <p className="font-bold text-gray-900 line-clamp-1">{item.productTitle}</p>

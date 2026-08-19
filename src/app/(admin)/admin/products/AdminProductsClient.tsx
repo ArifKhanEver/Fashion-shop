@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Plus, Search, Edit2, Trash2, AlertTriangle, Package, Star } from "lucide-react";
+import Image from "next/image";
 import { formatPrice } from "@/lib/utils";
 import { adminDeleteProduct, adminToggleProductFeatured } from "@/actions/admin.product.actions";
 import { toast } from "react-hot-toast";
@@ -187,13 +188,14 @@ export default function AdminProductsClient({
                     >
                       <td className="p-4">
                         <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden border border-gray-200 shrink-0 relative group">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
+                          <Image
                             src={
                               product.images[0]?.url || "/placeholder-product.jpg"
                             }
                             alt={product.title}
-                            className="w-full h-full object-cover"
+                            fill
+                            sizes="48px"
+                            className="object-cover"
                           />
                         </div>
                       </td>
