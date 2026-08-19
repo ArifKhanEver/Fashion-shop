@@ -62,9 +62,10 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     originalPrice: productData.discountedPrice ? Number(productData.price) : undefined,
     discountPercent: productData.discountedPrice ? Math.round(((Number(productData.price) - Number(productData.discountedPrice)) / Number(productData.price)) * 100) : undefined,
     image: productData.images?.[0]?.url || "/placeholder-product.jpg",
-    images: productData.images.map((img: any) => img.url),
+    images: productData.images.map((img: any) => ({ url: img.url })),
     colors: Array.from(new Set(productData.variants.map((v: any) => v.color).filter(Boolean))),
     sizes: Array.from(new Set(productData.variants.map((v: any) => v.size).filter(Boolean))),
+    variants: productData.variants,
   };
 
   // Fetch related products (latest from the same primary category)
