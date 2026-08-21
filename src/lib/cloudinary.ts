@@ -88,3 +88,5 @@ async function uploadToCloudinary(
 export async function deleteFromCloudinary(publicId: string): Promise<void> {
   await cloudinary.uploader.destroy(publicId);
 }
+
+// Configures Cloudinary SDK for image uploads.
