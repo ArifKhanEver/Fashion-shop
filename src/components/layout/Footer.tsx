@@ -167,3 +167,5 @@ export default function Footer({
     </footer>
   );
 }
+
+// Add transition
