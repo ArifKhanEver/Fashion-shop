@@ -56,7 +56,7 @@ export default function Header({
   const storeInitials = storeName ? storeName.charAt(0).toUpperCase() : "D";
 
   return (
-    <header className="sticky top-0 z-50 bg-white shadow-sm">
+    <header role="banner" className="sticky top-0 z-50 bg-white shadow-sm">
       {/* ── Top Trust Banner ──────────────────────────────── */}
       <div className="bg-[#E91E8C] text-white py-2 hidden sm:block">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
