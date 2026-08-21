@@ -136,3 +136,5 @@ export default async function CustomerDetailPage({
     </div>
   );
 }
+
+// Customer view doc
