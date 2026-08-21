@@ -53,7 +53,7 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} ${inter.className} antialiased`}>
+      <body className={`${inter.variable} ${notoSansBengali.variable} ${inter.className} antialiased`}>
         <CartProvider>
           <AnalyticsProvider gaId={gaId} pixelId={pixelId} />
           {children}
