@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Noto_Sans_Bengali } from "next/font/google";
 
 // Force all pages to be dynamically rendered — DB is only available at runtime
 export const dynamic = "force-dynamic";
