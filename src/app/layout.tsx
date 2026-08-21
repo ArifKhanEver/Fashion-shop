@@ -19,6 +19,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  appleWebApp: { capable: true, title: "DevWonder Fashion", statusBarStyle: "black-translucent" },
   applicationName: "DevWonder Fashion",
   title: {
     default: "DevWonder Fashion — Your Daily Fashion Companion",
