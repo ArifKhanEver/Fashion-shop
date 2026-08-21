@@ -9,6 +9,8 @@ import { Toaster } from "@/components/ui/toaster";
 import AnalyticsProvider from "@/components/analytics/AnalyticsProvider";
 import { getSetting } from "@/lib/site-settings";
 
+const notoSansBengali = Noto_Sans_Bengali({ subsets: ["bengali"], variable: "--font-noto-bengali", display: "swap" });
+
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
