@@ -25,7 +25,7 @@ export default function AdminBreadcrumbs() {
   });
 
   return (
-    <nav aria-label="breadcrumb" className="flex text-sm text-gray-500 mb-6" aria-label="Breadcrumb">
+    <nav aria-label="breadcrumb" className="flex text-sm md:text-base text-gray-500 mb-6" aria-label="Breadcrumb">
       <ol className="inline-flex items-center space-x-1 md:space-x-2">
         <li className="inline-flex items-center">
           <Link href="/admin" className="inline-flex items-center hover:text-[#E91E8C] transition-colors">
