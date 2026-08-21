@@ -145,3 +145,5 @@
   .cursor-grab   { cursor: grab; }
   .active\:cursor-grabbing:active { cursor: grabbing; }
 }
+
+/* Generic utilities */
