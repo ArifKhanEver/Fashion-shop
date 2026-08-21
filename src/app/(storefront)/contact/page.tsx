@@ -99,3 +99,5 @@ export default async function ContactPage() {
     </div>
   );
 }
+
+// Improve padding
