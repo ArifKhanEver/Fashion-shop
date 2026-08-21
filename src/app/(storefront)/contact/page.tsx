@@ -101,3 +101,5 @@ export default async function ContactPage() {
 }
 
 // Improve padding
+
+// Contact page component
