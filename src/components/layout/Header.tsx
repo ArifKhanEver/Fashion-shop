@@ -28,6 +28,7 @@ const CATEGORIES = [
   { name: "Z-STYLE HEELS", slug: "z-style-heels" },
 ];
 
+// Main app header
 export default function Header({
   logoUrl,
   storeName = "DEVWONDER FASHION",
