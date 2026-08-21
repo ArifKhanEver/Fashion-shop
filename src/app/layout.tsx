@@ -19,6 +19,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  applicationName: "DevWonder Fashion",
   title: {
     default: "DevWonder Fashion — Your Daily Fashion Companion",
     template: "%s | DevWonder Fashion",
